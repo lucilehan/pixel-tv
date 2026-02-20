@@ -1,0 +1,56 @@
+{
+  "name": "pixel-tv",
+  "displayName": "Pixel TV",
+  "description": "Watch YouTube videos inside VS Code through a pixel-art retro TV",
+  "version": "1.0.0",
+  "publisher": "your-publisher-name",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": ["Other"],
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/pixel-tv"
+  },
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pixelTv.open",
+        "title": "Pixel TV: Open",
+        "icon": "$(play)"
+      },
+      {
+        "command": "pixelTv.openWithUrl",
+        "title": "Pixel TV: Open URL"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "pixelTv.open",
+        "key": "ctrl+shift+y",
+        "mac": "cmd+shift+y"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "pixelTv.open",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}
