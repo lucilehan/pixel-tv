@@ -2,8 +2,12 @@
   "name": "pixel-tv",
   "displayName": "Pixel TV",
   "description": "A retro pixel-art TV for watching YouTube inside VS Code",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "lucilehan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lucilehan/pixel-tv"
+  },
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -11,39 +15,33 @@
     "Other"
   ],
   "icon": "media/icon.png",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/lucilehan/pixel-tv"
-  },
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "pixelTv.view",
+          "name": "Pixel TV",
+          "icon": "media/icon.png",
+          "contextualTitle": "Pixel TV"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "pixelTv.open",
-        "title": "Pixel TV: Open",
-        "icon": "$(play)"
-      },
-      {
-        "command": "pixelTv.openWithUrl",
-        "title": "Pixel TV: Open URL"
+        "command": "pixelTv.focus",
+        "title": "Pixel TV: Show in Explorer"
       }
     ],
     "keybindings": [
       {
-        "command": "pixelTv.open",
+        "command": "pixelTv.focus",
         "key": "ctrl+shift+y",
         "mac": "cmd+shift+y"
       }
-    ],
-    "menus": {
-      "editor/title": [
-        {
-          "command": "pixelTv.open",
-          "group": "navigation"
-        }
-      ]
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
