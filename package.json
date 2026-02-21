@@ -1,17 +1,19 @@
 {
   "name": "pixel-tv",
   "displayName": "Pixel TV",
-  "description": "Watch YouTube videos inside VS Code through a pixel-art retro TV",
+  "description": "A retro pixel-art TV for watching YouTube inside VS Code",
   "version": "1.0.0",
-  "publisher": "your-publisher-name",
+  "publisher": "lucilehan",
   "engines": {
     "vscode": "^1.75.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "icon": "media/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/YOUR_USERNAME/pixel-tv"
+    "url": "https://github.com/lucilehan/pixel-tv"
   },
   "activationEvents": [],
   "main": "./out/extension.js",
