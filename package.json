@@ -15,7 +15,10 @@
     "Other"
   ],
   "icon": "media/icon.png",
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:pixelTv.view",
+    "onCommand:pixelTv.view.focus"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "views": {
@@ -29,15 +32,10 @@
         }
       ]
     },
-    "commands": [
-      {
-        "command": "pixelTv.focus",
-        "title": "Pixel TV: Show in Explorer"
-      }
-    ],
+    "commands": [],
     "keybindings": [
       {
-        "command": "pixelTv.focus",
+        "command": "pixelTv.view.focus",
         "key": "ctrl+shift+y",
         "mac": "cmd+shift+y"
       }
