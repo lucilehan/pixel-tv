@@ -15,10 +15,7 @@
     "Other"
   ],
   "icon": "media/icon.png",
-  "activationEvents": [
-    "onView:pixelTv.view",
-    "onCommand:pixelTv.view.focus"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "views": {
