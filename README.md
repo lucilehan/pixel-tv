@@ -2,7 +2,7 @@
 
 > A retro pixel-art CRT television that lives in your VS Code Explorer sidebar — tune in to YouTube without leaving your editor.
 
-![Pixel TV Screenshot](https://github.com/lucilehan/pixel-tv/raw/main/media/preview.png)
+![Pixel TV in the Explorer sidebar](media/preview.png)
 
 ---
 
