@@ -109,10 +109,4 @@ Issues and pull requests are welcome! If you have a channel you'd love to see in
 
 ---
 
-## License
-
-MIT
-
----
-
 *Made with 📺 by [lucile han](https://github.com/lucilehan)*
