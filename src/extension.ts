@@ -1,35 +1,107 @@
 import * as vscode from 'vscode';
+import * as http from 'http';
+import * as net from 'net';
 
+// ── Local server (serves YouTube iframe from localhost so YouTube allows it) ──
+let server: http.Server | undefined;
+let serverPort: number | undefined;
+
+function getPlayerHtml(videoId: string): string {
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; background:#000; overflow:hidden; }
+  iframe { width:100%; height:100%; border:none; display:block; }
+</style>
+</head>
+<body>
+<iframe
+  src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1"
+  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+  allowfullscreen>
+</iframe>
+</body>
+</html>`;
+}
+
+async function findFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.listen(0, '127.0.0.1', () => {
+      const port = (srv.address() as net.AddressInfo).port;
+      srv.close(() => resolve(port));
+    });
+    srv.on('error', reject);
+  });
+}
+
+async function startServer(): Promise<number> {
+  if (server && serverPort) return serverPort;
+
+  const port = await findFreePort();
+
+  server = http.createServer((req, res) => {
+    const url = new URL(req.url || '/', `http://127.0.0.1:${port}`);
+    const videoId = url.searchParams.get('v') || '';
+
+    res.writeHead(200, {
+      'Content-Type': 'text/html',
+      // Allow the webview to embed this page
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.end(getPlayerHtml(videoId));
+  });
+
+  await new Promise<void>((resolve) => server!.listen(port, '127.0.0.1', resolve));
+  serverPort = port;
+  return port;
+}
+
+function stopServer() {
+  server?.close();
+  server = undefined;
+  serverPort = undefined;
+}
+
+// ── Webview View Provider ──
 class PixelTvViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewId = 'pixelTv.view';
   private _view?: vscode.WebviewView;
+  private _port?: number;
 
-  resolveWebviewView(
+  async resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ) {
     this._view = webviewView;
+    this._port = await startServer();
 
     webviewView.webview.options = {
       enableScripts: true,
+      // Allow loading from localhost
+      localResourceRoots: [],
     };
 
-    webviewView.webview.html = getWebviewContent();
+    webviewView.webview.html = getWebviewContent(this._port);
 
-    webviewView.webview.onDidReceiveMessage((message) => {
+    webviewView.webview.onDidReceiveMessage(async (message) => {
       if (message.type === 'openUrl') {
         vscode.env.openExternal(vscode.Uri.parse(message.url));
       }
+      if (message.type === 'playVideo') {
+        // Tell webview the localhost URL to load in the screen iframe
+        const playerUrl = `http://127.0.0.1:${this._port}/?v=${message.videoId}`;
+        this._view?.webview.postMessage({ type: 'loadPlayer', url: playerUrl });
+      }
     });
-  }
-
-  public loadVideo(videoId: string) {
-    this._view?.webview.postMessage({ type: 'loadVideo', videoId });
   }
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   const provider = new PixelTvViewProvider();
 
   context.subscriptions.push(
@@ -37,35 +109,20 @@ export function activate(context: vscode.ExtensionContext) {
       webviewOptions: { retainContextWhenHidden: true },
     })
   );
-
-  // Focus command — reveals the explorer pane and expands Pixel TV
-  context.subscriptions.push(
-    vscode.commands.registerCommand('pixelTv.view.focus', () => {
-      vscode.commands.executeCommand('pixelTv.view.focus');
-    })
-  );
 }
 
-function extractVideoId(input: string): string {
-  if (!input) return '';
-  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
-  try {
-    const url = new URL(input);
-    if (url.searchParams.get('v')) return url.searchParams.get('v')!;
-    if (url.hostname === 'youtu.be') return url.pathname.slice(1);
-    const m = url.pathname.match(/\/embed\/([a-zA-Z0-9_-]{11})/);
-    if (m) return m[1];
-  } catch {}
-  return input;
+export function deactivate() {
+  stopServer();
 }
 
-function getWebviewContent(): string {
+// ── Webview HTML (sidebar UI) ──
+function getWebviewContent(port: number): string {
   return /* html */`<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src https://www.youtube-nocookie.com https://www.youtube.com; img-src https://i.ytimg.com https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src http://127.0.0.1:${port} http://localhost:${port}; img-src https://i.ytimg.com https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline';">
 <title>Pixel TV</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
@@ -104,11 +161,8 @@ function getWebviewContent(): string {
     font-family: monospace;
   }
 
-  /* ── Sidebar-optimised TV layout ── */
   .tv-wrap {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+    display: flex; flex-direction: column; width: 100%;
     background-color: var(--wood-1);
     background-image: repeating-linear-gradient(90deg,
       transparent 0px, transparent 18px,
@@ -116,13 +170,10 @@ function getWebviewContent(): string {
       transparent 19px, transparent 32px,
       rgba(255,255,255,0.04) 32px, rgba(255,255,255,0.04) 33px);
     border: 3px solid var(--wood-edge);
-    box-shadow:
-      inset 3px 3px 0 var(--wood-3),
-      inset -3px -3px 0 var(--wood-5);
+    box-shadow: inset 3px 3px 0 var(--wood-3), inset -3px -3px 0 var(--wood-5);
     padding: 8px;
   }
 
-  /* Top nameplate */
   .tv-nameplate {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 6px; padding: 0 2px;
@@ -131,8 +182,7 @@ function getWebviewContent(): string {
     font-family: 'Press Start 2P', monospace;
     font-size: 5px; letter-spacing: 2px; color: var(--wood-3);
     background: var(--wood-5); border: 2px solid var(--wood-edge);
-    padding: 3px 6px;
-    text-shadow: 0 1px 0 var(--wood-edge);
+    padding: 3px 6px; text-shadow: 0 1px 0 var(--wood-edge);
     box-shadow: inset 1px 1px 0 rgba(255,255,255,0.08);
   }
   .tv-screws { display: flex; gap: 4px; }
@@ -144,19 +194,15 @@ function getWebviewContent(): string {
   .screw::before { content:''; position:absolute; top:50%; left:1px; right:1px; height:1px; background:var(--wood-edge); transform:translateY(-50%); }
   .screw::after  { content:''; position:absolute; left:50%; top:1px; bottom:1px; width:1px; background:var(--wood-edge); transform:translateX(-50%); }
 
-  /* Bezel + screen */
   .screen-bezel {
     background: var(--bez-2); border: 3px solid var(--bez-4); padding: 7px;
-    box-shadow:
-      inset 3px 3px 0 var(--bez-hi),
-      inset -3px -3px 0 var(--bez-4);
+    box-shadow: inset 3px 3px 0 var(--bez-hi), inset -3px -3px 0 var(--bez-4);
     margin-bottom: 6px;
   }
   .screen {
     background: var(--screen-bg); border: 2px solid var(--bez-4);
     position: relative; overflow: hidden;
-    aspect-ratio: 16/9; /* fills width, maintains ratio */
-    width: 100%;
+    width: 100%; height: 148px; flex-shrink: 0;
   }
   .screen::after {
     content:''; position:absolute; inset:0; pointer-events:none; z-index:20;
@@ -168,8 +214,8 @@ function getWebviewContent(): string {
     pointer-events:none; z-index:30;
   }
   .static-bg {
-    position:absolute; inset:0; opacity:0.1;
-    animation: staticAnim 0.1s steps(1) infinite; pointer-events:none;
+    position:absolute; inset:0; opacity:0.1; pointer-events:none;
+    animation: staticAnim 0.1s steps(1) infinite;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
   }
   @keyframes staticAnim { 0%{background-position:0 0} 25%{background-position:-12px 6px} 50%{background-position:6px -6px} 75%{background-position:-6px 12px} }
@@ -187,9 +233,12 @@ function getWebviewContent(): string {
   @keyframes flicker { 0%,93%,100%{opacity:0.4} 94%{opacity:0.1} 95%{opacity:0.4} 97%{opacity:0.08} 98%{opacity:0.35} }
   .idle-sub { font-size:4px; color:#2a2a40; font-family:'Press Start 2P',monospace; margin-top:4px; }
 
-  #ytIframe { position:absolute; inset:0; width:100%; height:100%; border:none; display:none; z-index:5; }
+  /* The player iframe loads from localhost */
+  #playerFrame {
+    position:absolute; inset:0; width:100%; height:100%;
+    border:none; display:none; z-index:5;
+  }
 
-  /* Loading overlay */
   .loading-overlay { position:absolute; inset:0; z-index:8; display:none; flex-direction:column; align-items:center; justify-content:center; background:var(--screen-bg); gap:8px; }
   .loading-overlay.visible { display:flex; }
   .loading-bar { width:80px; height:3px; background:#111a0e; border:1px solid #0a120a; overflow:hidden; }
@@ -198,43 +247,39 @@ function getWebviewContent(): string {
   .loading-text { font-family:'VT323',monospace; font-size:13px; color:var(--col-amber); opacity:0.6; animation:pulse 0.7s steps(1) infinite; }
   @keyframes pulse { 50%{ opacity:0.15; } }
 
-  /* Now playing bar */
   .now-playing-bar {
     position:absolute; bottom:0; left:0; right:0; padding:4px 8px;
     background:linear-gradient(transparent, #00000099 70%);
-    z-index:30; display:none; align-items:center; gap:6px; overflow:hidden;
+    z-index:30; display:none; align-items:center; gap:6px; pointer-events:none; overflow:hidden;
   }
   .now-playing-bar.visible { display:flex; }
   .np-dot { width:4px; height:4px; background:var(--col-amber); box-shadow:var(--glow-amber); flex-shrink:0; animation:ledPulse 1.4s ease-in-out infinite; }
   @keyframes ledPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
   .np-title { font-size:3px; color:var(--text-bright); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; width:0; }
 
-  /* Toolbar */
   .toolbar {
     display:flex; align-items:center; gap:4px;
     padding:5px 4px; background:#080a06; border-top:1px solid var(--wood-edge);
     border-bottom:1px solid #0d0d08;
   }
-  .yt-logo { font-size:5px; color:var(--col-red); padding:2px 5px; border:1px solid var(--col-red); opacity:0.8; flex-shrink:0; white-space:nowrap; }
-  .search-box { flex:1; display:flex; align-items:center; background:#060808; border:1px solid #1a2018; height:20px; padding:0 5px; min-width:0; gap:3px; }
+  .yt-logo { font-size:5px; color:var(--col-red); padding:2px 5px; border:1px solid var(--col-red); opacity:0.8; flex-shrink:0; }
+  .search-box { flex:1; display:flex; align-items:center; background:#060808; border:1px solid #1a2018; height:20px; padding:0 5px; min-width:0; }
   .search-input { background:none; border:none; outline:none; flex:1; font-family:'VT323',monospace; font-size:13px; color:#6dbf7e; caret-color:#6dbf7e; min-width:0; }
   .search-input::placeholder { color:#2a3a28; font-size:11px; }
   .search-btn { font-family:'Press Start 2P',monospace; font-size:4px; padding:3px 6px; background:#0c1410; color:var(--col-amber); border:1px solid var(--col-amber); box-shadow:var(--glow-amber); cursor:pointer; height:20px; opacity:0.8; flex-shrink:0; }
   .search-btn:hover { opacity:1; }
 
-  /* Quick chips */
   .quick-bar { display:flex; flex-wrap:wrap; padding:4px; background:#040605; border-top:1px solid #0e110e; }
   .chip { font-family:'Press Start 2P',monospace; font-size:4px; padding:3px 6px; margin:2px; border:1px solid #1a1a10; background:#080a06; color:#b06a2a; cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; }
   .chip:hover { border-color:#c87a35; color:#c87a35; }
   .chip.active { background:#10080e; border-color:var(--col-purple); color:var(--col-purple); }
 
-  /* Results list */
   .results-header { display:flex; align-items:center; justify-content:space-between; padding:4px 6px; background:#060806; border-top:1px solid #0e110e; }
   .results-label { font-size:3px; color:var(--text-dim); letter-spacing:1px; }
   .results-count { font-family:'VT323',monospace; font-size:11px; color:var(--col-amber); opacity:0.6; }
   .results-list { background:#030506; }
 
-  .result-item { display:flex; align-items:center; gap:6px; padding:0 6px; height:44px; border-bottom:1px solid #0c0e0a; cursor:pointer; transition:background 0.1s; }
+  .result-item { display:flex; align-items:center; gap:6px; padding:0 6px; height:44px; border-bottom:1px solid #0c0e0a; cursor:pointer; transition:background 0.1s; flex-shrink:0; }
   .result-item:hover { background:#0a0d08; }
   .result-item.selected { background:#0c1008; border-left:2px solid var(--col-amber); padding-left:4px; }
   .result-thumb { width:44px; height:28px; flex-shrink:0; overflow:hidden; border:1px solid #1a1a12; background:#080808; }
@@ -246,7 +291,6 @@ function getWebviewContent(): string {
   .result-ch { font-size:3px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
   .result-dur { font-family:'VT323',monospace; font-size:10px; color:var(--col-amber); opacity:0.55; flex-shrink:0; white-space:nowrap; }
 
-  /* Bottom knob strip */
   .knob-strip {
     display:flex; align-items:center; justify-content:center; gap:16px;
     padding:6px 8px; background-color:#7a4e18;
@@ -264,25 +308,20 @@ function getWebviewContent(): string {
   }
   .dial::after { content:''; position:absolute; top:3px; left:50%; transform:translateX(-50%); width:5px; height:5px; border-radius:50%; background:var(--knob-xdk); }
   .dial-label { font-family:'Press Start 2P',monospace; font-size:4px; color:var(--wood-3); letter-spacing:1px; }
-
-  /* LED dots */
   .led-row { display:flex; gap:3px; align-items:center; }
   .led { width:5px; height:5px; background:var(--wood-4); border:1px solid var(--wood-edge); }
   .led.active { background:var(--col-amber); box-shadow:0 0 4px var(--col-amber); }
 </style>
 </head>
 <body>
-
 <div class="tv-wrap">
 
-  <!-- Nameplate -->
   <div class="tv-nameplate">
     <div class="tv-screws"><div class="screw"></div><div class="screw"></div></div>
     <div class="tv-brand">PIXEL TV · MODEL 9</div>
     <div class="tv-screws"><div class="screw"></div><div class="screw"></div></div>
   </div>
 
-  <!-- Screen -->
   <div class="screen-bezel">
     <div class="screen" id="screen">
       <div class="static-bg"></div>
@@ -294,7 +333,8 @@ function getWebviewContent(): string {
         <div class="loading-bar"><div class="loading-bar-fill" id="loadingFill"></div></div>
         <div class="loading-text" id="loadingText">TUNING▮</div>
       </div>
-      <iframe id="ytIframe" src="" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+      <!-- Loads YouTube from localhost to bypass Error 153 -->
+      <iframe id="playerFrame" src="" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
       <div class="now-playing-bar" id="nowPlayingBar">
         <div class="np-dot"></div>
         <span class="np-title" id="npTitle"></span>
@@ -302,7 +342,6 @@ function getWebviewContent(): string {
     </div>
   </div>
 
-  <!-- Toolbar -->
   <div class="toolbar">
     <div class="yt-logo">▶YT</div>
     <div class="search-box">
@@ -311,7 +350,6 @@ function getWebviewContent(): string {
     <button class="search-btn" id="searchBtn">TUNE</button>
   </div>
 
-  <!-- Genre chips -->
   <div class="quick-bar">
     <div class="chip" data-q="lofi hip hop">◎ LOFI</div>
     <div class="chip" data-q="synthwave music">▶ SYNTH</div>
@@ -321,14 +359,12 @@ function getWebviewContent(): string {
     <div class="chip" data-q="focus study">✦ FOCUS</div>
   </div>
 
-  <!-- Results -->
   <div class="results-header">
     <span class="results-label">CHANNELS</span>
     <span class="results-count" id="resultsCount">0</span>
   </div>
   <div class="results-list" id="resultsList"></div>
 
-  <!-- Knob strip -->
   <div class="knob-strip">
     <div class="led-row">
       <div class="led active"></div><div class="led"></div>
@@ -348,10 +384,11 @@ function getWebviewContent(): string {
     </div>
   </div>
 
-</div><!-- /tv-wrap -->
+</div>
 
 <script>
   const vscode = acquireVsCodeApi();
+  const playerFrame = document.getElementById('playerFrame');
 
   const allVideos = [
     { id:"jfKfPfyJRdk", title:"lofi hip hop radio – beats to relax/study to", ch:"Lofi Girl",           dur:"LIVE",    tags:"lofi hip hop chill relax study beats music" },
@@ -389,7 +426,6 @@ function getWebviewContent(): string {
   const loadingText    = document.getElementById('loadingText');
   const nowPlayingBar  = document.getElementById('nowPlayingBar');
   const npTitle        = document.getElementById('npTitle');
-  const ytIframe       = document.getElementById('ytIframe');
 
   function doSearch(q) {
     q = q.trim().toLowerCase();
@@ -452,15 +488,25 @@ function getWebviewContent(): string {
     dial.dataset.rot = rot;
     dial.style.transform = \`rotate(\${rot}deg)\`;
 
-    setTimeout(() => {
-      loadingOverlay.classList.remove('visible');
-      idleScreen.style.display = 'none';
-      ytIframe.src = \`https://www.youtube-nocookie.com/embed/\${r.id}?autoplay=1&rel=0&modestbranding=1\`;
-      ytIframe.style.display = 'block';
-      npTitle.textContent = r.title;
-      nowPlayingBar.classList.add('visible');
-    }, 500);
+    // Tell the extension host to give us the localhost player URL
+    vscode.postMessage({ type: 'playVideo', videoId: r.id });
+
+    npTitle.textContent = r.title;
   }
+
+  // Extension sends back the localhost URL to load
+  window.addEventListener('message', event => {
+    const msg = event.data;
+    if (msg.type === 'loadPlayer') {
+      setTimeout(() => {
+        loadingOverlay.classList.remove('visible');
+        idleScreen.style.display = 'none';
+        playerFrame.src = msg.url;
+        playerFrame.style.display = 'block';
+        nowPlayingBar.classList.add('visible');
+      }, 500);
+    }
+  });
 
   searchBtn.addEventListener('click', () => doSearch(searchInput.value));
   searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(searchInput.value); });
@@ -474,16 +520,6 @@ function getWebviewContent(): string {
     });
   });
 
-  window.addEventListener('message', event => {
-    const msg = event.data;
-    if (msg.type === 'loadVideo' && msg.videoId) {
-      idleScreen.style.display = 'none';
-      ytIframe.src = \`https://www.youtube-nocookie.com/embed/\${msg.videoId}?autoplay=1&rel=0\`;
-      ytIframe.style.display = 'block';
-    }
-  });
-
-  // Draggable dials
   document.querySelectorAll('.dial').forEach(dial => {
     let dragging = false, startY = 0;
     dial.addEventListener('mousedown', e => { dragging = true; startY = e.clientY; e.preventDefault(); });
@@ -502,5 +538,3 @@ function getWebviewContent(): string {
 </body>
 </html>`;
 }
-
-export function deactivate() {}
