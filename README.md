@@ -1,8 +1,20 @@
 # 📺 Pixel TV
 
-> A retro pixel-art CRT television that lives in your VS Code Explorer sidebar — tune in to YouTube without leaving your editor.
+> Tune into live YouTube streams inside VS Code — like flipping channels on a retro TV. Sits in your Explorer sidebar, remembers your last channel, and shows what's on in the status bar.
 
-![Pixel TV in the Explorer sidebar](media/preview.png)
+![Pixel TV](https://github.com/lucilehan/pixel-tv/raw/main/media/preview.png)
+
+---
+
+## What it does
+
+Pixel TV sits permanently in your Explorer panel underneath Timeline. Pick a **Room**, click a channel, and it keeps playing while you code.
+
+- **Rooms** — four curated environments (The Café, Rainy Library, Mission Control, Vibe Coding), each with hand-picked 24/7 live streams that match the vibe
+- **Channel Memory** — remembers what you were watching. Reopen VS Code and a "Last Watched" banner lets you resume in one click
+- **Status Bar** — shows what's on in the bottom bar at all times. Click it to change room or stop without opening the sidebar
+
+Think of it less like a video player and more like a TV set that happens to live in your editor — you don't search for content, you just change the channel.
 
 ---
 
@@ -20,46 +32,43 @@ code --install-extension pixel-tv-1.0.1.vsix
 
 ## Usage
 
-Pixel TV lives in the **Explorer sidebar** underneath Timeline. Open the Explorer panel (`Cmd+Shift+E`) and scroll down to find it — or focus it directly with:
+Open the Explorer panel (`Cmd+Shift+E`) and scroll down to **Pixel TV** — or jump to it directly:
 
-| Platform | Shortcut |
-|----------|----------|
-| macOS    | `Cmd+Shift+Y` |
-| Windows / Linux | `Ctrl+Shift+Y` |
+| Action | macOS | Windows / Linux |
+|--------|-------|-----------------|
+| Open Pixel TV | `Cmd+Shift+Y` | `Ctrl+Shift+Y` |
+| Change room / Stop | Click status bar item | Click status bar item |
+| Command palette | `Pixel TV: Open` | `Pixel TV: Now Playing / Change Room` |
+
+Pick a Room, click a channel, and the TV tunes in. The status bar item in the bottom-right shows what's currently on air.
 
 ---
 
-## Features
+## Rooms
 
-### 📺 Lives in the Explorer Sidebar
-Pixel TV sits permanently in the Explorer pane underneath Timeline — always accessible, never in the way. The screen fills the available width and scales with the panel.
+Four named environments, each with curated 24/7 live streams:
 
-### 🎛️ Retro Pixel-Art TV Shell
-A handcrafted CRT television with wood-grain cabinet, thick plastic bezel, corner screws, checkered channel knobs, speaker grille, and LED indicator dots. Everything is pure CSS.
+| Room | Vibe | What's on |
+|------|------|-----------|
+| ☕ The Café | A corner table by the window. It's raining. | Jazz, bossa nova, coffee shop radio |
+| 🌧 Rainy Library | Dark academia. Lamp on. Pages turning. | Lofi Girl, Chillhop |
+| 🚀 Mission Control | Synthwave and neon. Somewhere in the future. | Synthwave Plaza, retrowave |
+| 🧑‍💻 Vibe Coding | Others are coding too. You're not alone. | Brain Food, study-with-me streams |
 
-### 🔍 Built-in Search
-Type anything into the search bar and hit **TUNE** — the TV scans its channel library and surfaces the best matches with a satisfying loading animation.
+---
 
-### ⚡ Quick-Access Genre Chips
-One-click chips to instantly tune into your favourite category:
+## Live Stream Search (optional)
 
-| Chip | Genre |
-|------|-------|
-| ◎ LOFI | Lo-fi hip hop & chill beats |
-| ▶ SYNTH | Synthwave & retrowave |
-| ♪ JAZZ | Jazz, bossa nova & coffee shop |
-| ~ NATURE | Rain, ocean waves & forest ambience |
-| ⚡ GAMING | Epic gaming & EDM mixes |
-| ✦ FOCUS | Deep focus, binaural beats & classical |
+If you want to search beyond the built-in channels, add a free YouTube Data API v3 key in Settings and the search bar will pull live streams directly from YouTube.
 
-### 📡 Channel List
-The results panel shows available channels at all times — browse and switch without interrupting your flow.
+**To set up:**
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) and create a free API key with YouTube Data API v3 enabled
+2. Open VS Code Settings (`Cmd+,`) and search `pixelTv`
+3. Paste your key into **Pixel TV: Youtube Api Key**
 
-### 🎚️ Draggable Knobs
-Spin the **CH** and **VOL** dials with your mouse. The CH dial animates every time you switch channels.
+Your key is stored locally in VS Code's settings and never committed to any repository.
 
-### 📺 In-Editor Playback
-Videos embed directly using `youtube-nocookie.com` — no ads, no tracking, no leaving the editor.
+Without a key, the search bar filters the built-in channel list only.
 
 ---
 
@@ -83,29 +92,26 @@ vsce package
 
 ---
 
-## Contributing
-
-Issues and pull requests are welcome! If you have a channel you'd love to see in the default library, open an issue with the YouTube video ID and genre.
-
----
-
 ## Changelog
 
+### 1.0.2
+- **Rooms** — genre chips replaced with four named rooms: ☕ The Café, 🌧 Rainy Library, 🚀 Mission Control, 🧑‍💻 Vibe Coding. Each room has its own vibe description and curated channels
+- **Channel Memory** — Pixel TV remembers what you were watching. On reload, a "Last Watched" banner appears on screen so you can resume in one click
+- **Status Bar** — a live indicator appears in the VS Code status bar showing what's on. Click it to change room or stop playback without opening the sidebar
+- Refreshed channel list organized by room
+- "LIVE CHANNELS" header renamed to "ON AIR"
+
 ### 1.0.1
-- Moved from editor tab to **Explorer sidebar** (underneath Timeline) using `WebviewViewProvider`
-- Redesigned layout for narrow column — screen fills full width with 16:9 aspect ratio
-- Knob strip moved to bottom of sidebar panel
-- Keyboard shortcut now focuses the Explorer sidebar view directly
-- Version bump and README fix for missing screenshot
+- Moved into the **Explorer sidebar** underneath Timeline
+- Tuning-first design — curated live channels by genre, no setup required
+- Optional YouTube API key for live stream search
+- Local HTTP server to enable in-editor YouTube playback
+- Fixed layout stability — panel size never shifts on interaction
+- Refreshed channel list with only persistent 24/7 streams
+- Updated icon and screenshot
 
 ### 1.0.0
 - Initial release
-- Pixel-art CRT TV shell with wood-grain cabinet, bezel, knobs, and legs
-- 23 built-in channels across 6 genres
-- Search with scoring algorithm
-- Quick-access genre chips
-- Draggable CH and VOL knobs
-- In-editor YouTube playback via `youtube-nocookie.com`
 
 ---
 
