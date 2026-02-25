@@ -16,9 +16,7 @@
     "Visualization"
   ],
   "icon": "media/icon.png",
-  "activationEvents": [
-    "onView:pixelTv.view"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "views": {
