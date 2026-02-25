@@ -44,9 +44,35 @@ async function startServer(): Promise<number> {
   if (server && serverPort) { return serverPort; }
   const port = await findFreePort();
   server = http.createServer((req, res) => {
+    if (req.method !== 'GET') {
+      res.writeHead(405);
+      res.end();
+      return;
+    }
+
+    const host = req.headers.host || '';
+    if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) {
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+
     const url = new URL(req.url || '/', `http://127.0.0.1:${port}`);
-    const videoId = url.searchParams.get('v') || '';
-    res.writeHead(200, { 'Content-Type': 'text/html', 'Access-Control-Allow-Origin': '*' });
+    const rawVideoId = url.searchParams.get('v') || '';
+    const videoIdMatch = rawVideoId.match(/^[a-zA-Z0-9_-]{11}$/);
+    const videoId = videoIdMatch ? videoIdMatch[0] : '';
+
+    if (!videoId) {
+      res.writeHead(400);
+      res.end('Invalid Video ID');
+      return;
+    }
+
+    res.writeHead(200, {
+      'Content-Type': 'text/html',
+      'Access-Control-Allow-Origin': `http://127.0.0.1:${port}`,
+      'Content-Security-Policy': "frame-src https://www.youtube-nocookie.com; default-src 'none'; style-src 'unsafe-inline';"
+    });
     res.end(getPlayerHtml(videoId));
   });
   await new Promise<void>((resolve) => server!.listen(port, '127.0.0.1', resolve));
@@ -82,11 +108,11 @@ async function searchYouTubeLiveStreams(query: string, apiKey: string): Promise<
   }
 
   return (json.items || []).map((item: any) => ({
-    id:    item.id.videoId,
+    id: item.id.videoId,
     title: item.snippet.title,
-    ch:    item.snippet.channelTitle,
-    dur:   'LIVE',
-    tags:  '',
+    ch: item.snippet.channelTitle,
+    dur: 'LIVE',
+    tags: '',
   }));
 }
 
@@ -103,22 +129,22 @@ interface VideoItem {
 // IDs may still rotate occasionally — the search feature keeps things fresh.
 const CURATED_LIVE: VideoItem[] = [
   // LOFI
-  { id: "jfKfPfyJRdk", title: "lofi hip hop radio – beats to relax/study to", ch: "Lofi Girl",        dur: "LIVE", tags: "lofi hip hop chill relax study beats music" },
-  { id: "5qap5aO4i9A", title: "lofi hip hop radio – beats to sleep/chill to",  ch: "Lofi Girl",        dur: "LIVE", tags: "lofi hip hop chill sleep beats music" },
-  { id: "kgx4WGK0oNU", title: "Chillhop Radio – jazzy & lofi beats",           ch: "Chillhop Music",   dur: "LIVE", tags: "lofi chillhop hip hop chill beats music" },
-  { id: "rUxyKA_-grg", title: "Lofi Hip Hop Beats – 24/7",                     ch: "Lofi Records",     dur: "LIVE", tags: "lofi hip hop chill relax beats music" },
+  { id: "jfKfPfyJRdk", title: "lofi hip hop radio – beats to relax/study to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi hip hop chill relax study beats music" },
+  { id: "5qap5aO4i9A", title: "lofi hip hop radio – beats to sleep/chill to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi hip hop chill sleep beats music" },
+  { id: "kgx4WGK0oNU", title: "Chillhop Radio – jazzy & lofi beats", ch: "Chillhop Music", dur: "LIVE", tags: "lofi chillhop hip hop chill beats music" },
+  { id: "rUxyKA_-grg", title: "Lofi Hip Hop Beats – 24/7", ch: "Lofi Records", dur: "LIVE", tags: "lofi hip hop chill relax beats music" },
   // JAZZ
-  { id: "Dx5qFachd3A", title: "Relaxing Jazz & Bossa Nova – Coffee Shop",      ch: "Cafe Music BGM",   dur: "LIVE", tags: "jazz bossa nova coffee relax chill music" },
-  { id: "DWcJFNfaw9c", title: "Coffee Shop Radio – Jazz & Bossa Nova",         ch: "Cafe Music BGM",   dur: "LIVE", tags: "jazz bossa nova coffee cafe chill relax music" },
-  { id: "neV3EPgvZ3g", title: "Smooth Jazz Radio – 24/7 Live Stream",          ch: "Smooth Jazz",      dur: "LIVE", tags: "jazz smooth saxophone piano relax chill music" },
+  { id: "Dx5qFachd3A", title: "Relaxing Jazz & Bossa Nova – Coffee Shop", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee relax chill music" },
+  { id: "DWcJFNfaw9c", title: "Coffee Shop Radio – Jazz & Bossa Nova", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee cafe chill relax music" },
+  { id: "neV3EPgvZ3g", title: "Smooth Jazz Radio – 24/7 Live Stream", ch: "Smooth Jazz", dur: "LIVE", tags: "jazz smooth saxophone piano relax chill music" },
   // GAMING
-  { id: "N9B-q9TJN5Y", title: "Gaming Music Radio – 24/7 Live",               ch: "Gaming Music",     dur: "LIVE", tags: "gaming music edm electronic hype beats" },
-  { id: "4xDzrJKXOOY", title: "Synthwave & Retrowave – 24/7 Live Radio",       ch: "Synthwave Plaza",  dur: "LIVE", tags: "gaming synthwave retrowave electronic music" },
-  { id: "CD71fFzEpFY", title: "Outrun Synthwave – 24/7 Radio",                 ch: "NewRetroWave",     dur: "LIVE", tags: "gaming synthwave outrun retro electronic music neon" },
+  { id: "N9B-q9TJN5Y", title: "Gaming Music Radio – 24/7 Live", ch: "Gaming Music", dur: "LIVE", tags: "gaming music edm electronic hype beats" },
+  { id: "4xDzrJKXOOY", title: "Synthwave & Retrowave – 24/7 Live Radio", ch: "Synthwave Plaza", dur: "LIVE", tags: "gaming synthwave retrowave electronic music" },
+  { id: "CD71fFzEpFY", title: "Outrun Synthwave – 24/7 Radio", ch: "NewRetroWave", dur: "LIVE", tags: "gaming synthwave outrun retro electronic music neon" },
   // FOCUS — study/vibecoding live cams
-  { id: "5tUCmMM9S4E", title: "Brain Food – Deep Focus Music Live",            ch: "Brain Food",       dur: "LIVE", tags: "study vibe focus vibecoding coding work concentration" },
-  { id: "aqBkAvEVeM0", title: "Coding & Chill – Vibe Coding Live",             ch: "Vibe Coding",      dur: "LIVE", tags: "study vibe vibecoding coding programming focus work" },
-  { id: "lTRiuFIWV54", title: "Study With Me – Tokyo Coffee Shop Live",        ch: "Tokyo Study",      dur: "LIVE", tags: "study vibe with me focus coffee shop lofi work" },
+  { id: "5tUCmMM9S4E", title: "Brain Food – Deep Focus Music Live", ch: "Brain Food", dur: "LIVE", tags: "study vibe focus vibecoding coding work concentration" },
+  { id: "aqBkAvEVeM0", title: "Coding & Chill – Vibe Coding Live", ch: "Vibe Coding", dur: "LIVE", tags: "study vibe vibecoding coding programming focus work" },
+  { id: "lTRiuFIWV54", title: "Study With Me – Tokyo Coffee Shop Live", ch: "Tokyo Study", dur: "LIVE", tags: "study vibe with me focus coffee shop lofi work" },
 ];
 
 // ── Webview View Provider ──────────────────────────────────────────────────────
@@ -142,8 +168,12 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
 
       // Play: send back localhost URL
       if (msg.type === 'playVideo') {
-        const url = `http://127.0.0.1:${this._port}/?v=${msg.videoId}`;
-        this._view?.webview.postMessage({ type: 'loadPlayer', url });
+        const videoIdMatch = String(msg.videoId).match(/^[a-zA-Z0-9_-]{11}$/);
+        const safeId = videoIdMatch ? videoIdMatch[0] : '';
+        if (safeId) {
+          const url = `http://127.0.0.1:${this._port}/?v=${safeId}`;
+          this._view?.webview.postMessage({ type: 'loadPlayer', url });
+        }
       }
 
       // Search: call YouTube API from extension host (key stays server-side)
@@ -152,9 +182,11 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
           .getConfiguration('pixelTv')
           .get('youtubeApiKey', '');
 
+        const safeQuery = String(msg.query).slice(0, 200);
+
         if (!apiKey) {
           // No key — filter curated list locally and return
-          const q = msg.query.toLowerCase();
+          const q = safeQuery.toLowerCase();
           const results = CURATED_LIVE.filter(v =>
             (v.title + v.ch + v.tags).toLowerCase().includes(q)
           );
@@ -167,7 +199,7 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
         }
 
         try {
-          const results = await searchYouTubeLiveStreams(msg.query, apiKey);
+          const results = await searchYouTubeLiveStreams(safeQuery, apiKey);
           this._view?.webview.postMessage({ type: 'searchResults', results });
         } catch (err: any) {
           this._view?.webview.postMessage({ type: 'searchError', message: err.message });
@@ -200,14 +232,24 @@ export function deactivate() {
 }
 
 // ── Webview HTML ───────────────────────────────────────────────────────────────
+function getNonce(): string {
+  let text = '';
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+
 function getWebviewContent(port: number, defaultVideos: VideoItem[]): string {
+  const nonce = getNonce();
   const videosJson = JSON.stringify(defaultVideos);
   return /* html */`<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src http://127.0.0.1:${port} http://localhost:${port}; img-src https://i.ytimg.com https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src http://127.0.0.1:${port} http://localhost:${port}; img-src https://i.ytimg.com https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'nonce-${nonce}';">
 <title>Pixel TV</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
@@ -430,7 +472,7 @@ function getWebviewContent(port: number, defaultVideos: VideoItem[]): string {
 
 </div>
 
-<script>
+<script nonce="${nonce}">
   const vscode = acquireVsCodeApi();
   const playerFrame   = document.getElementById('playerFrame');
   const idleScreen    = document.getElementById('idleScreen');
@@ -446,6 +488,11 @@ function getWebviewContent(port: number, defaultVideos: VideoItem[]): string {
 
   const defaultVideos = ${videosJson};
 
+  // ── Helpers ──
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
   // ── Render results ──
   function renderResults(videos, showBanner) {
     resultsList.innerHTML = '';
@@ -460,8 +507,8 @@ function getWebviewContent(port: number, defaultVideos: VideoItem[]): string {
           <img src="https://i.ytimg.com/vi/\${r.id}/mqdefault.jpg" onerror="this.style.display='none'"/>
         </div>
         <div class="result-meta">
-          <div class="result-title">\${r.title}</div>
-          <div class="result-ch">\${r.ch}</div>
+          <div class="result-title">\${escHtml(r.title)}</div>
+          <div class="result-ch">\${escHtml(r.ch)}</div>
         </div>
         <div class="result-dur">● LIVE</div>
       \`;
@@ -523,7 +570,11 @@ function getWebviewContent(port: number, defaultVideos: VideoItem[]): string {
 
     if (msg.type === 'searchError') {
       loadingOverlay.classList.remove('visible');
-      resultsList.innerHTML = \`<div class="error-msg">⚠ \${msg.message}</div>\`;
+      const errDiv = document.createElement('div');
+      errDiv.className = 'error-msg';
+      errDiv.textContent = '⚠ ' + msg.message;
+      resultsList.innerHTML = '';
+      resultsList.appendChild(errDiv);
     }
   });
 
