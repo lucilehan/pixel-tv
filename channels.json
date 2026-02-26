@@ -54,43 +54,11 @@
             "room": "cafe"
         },
         {
-            "id": "DWcJFNfaw9c",
-            "title": "Coffee Shop Radio – Jazz & Bossa Nova",
-            "ch": "Cafe Music BGM",
-            "dur": "LIVE",
-            "tags": "jazz bossa nova coffee cafe chill music",
-            "room": "cafe"
-        },
-        {
-            "id": "TbFrCUMFaZ8",
-            "title": "Jazz Piano Radio – Relaxing Music 24/7",
-            "ch": "Cafe Music BGM",
-            "dur": "LIVE",
-            "tags": "jazz piano relax smooth music chill",
-            "room": "cafe"
-        },
-        {
             "id": "jfKfPfyJRdk",
             "title": "lofi hip hop radio – beats to relax/study to",
             "ch": "Lofi Girl",
             "dur": "LIVE",
             "tags": "lofi dark academia chill relax study beats",
-            "room": "library"
-        },
-        {
-            "id": "5qap5aO4i9A",
-            "title": "lofi hip hop radio – beats to sleep/chill to",
-            "ch": "Lofi Girl",
-            "dur": "LIVE",
-            "tags": "lofi dark academia chill sleep beats music",
-            "room": "library"
-        },
-        {
-            "id": "kgx4WGK0oNU",
-            "title": "Chillhop Radio – jazzy & lofi beats",
-            "ch": "Chillhop Music",
-            "dur": "LIVE",
-            "tags": "lofi dark academia chillhop chill beats",
             "room": "library"
         },
         {
@@ -102,43 +70,11 @@
             "room": "mission"
         },
         {
-            "id": "MVPTGNGiI-4",
-            "title": "Chillstep Radio – 24/7 Gaming Beats",
-            "ch": "Chillstep",
-            "dur": "LIVE",
-            "tags": "gaming chillstep electronic beats music",
-            "room": "mission"
-        },
-        {
-            "id": "n61ULEU7CO0",
-            "title": "Epic Music Radio – Gaming & Study Beats",
-            "ch": "Epic Music",
-            "dur": "LIVE",
-            "tags": "gaming synthwave epic music beats",
-            "room": "mission"
-        },
-        {
             "id": "5tUCmMM9S4E",
             "title": "Brain Food – Deep Focus Music 24/7",
             "ch": "Brain Food",
             "dur": "LIVE",
             "tags": "study vibe focus vibecoding coding work",
-            "room": "vibe"
-        },
-        {
-            "id": "lTRiuFIWV54",
-            "title": "Lofi Girl – beats to study/code to",
-            "ch": "Lofi Girl",
-            "dur": "LIVE",
-            "tags": "study vibe focus vibecoding coding lofi",
-            "room": "vibe"
-        },
-        {
-            "id": "HoWRmBzVMdM",
-            "title": "Study With Me – Pomodoro Timer Live",
-            "ch": "Study Together",
-            "dur": "LIVE",
-            "tags": "study vibe with me focus pomodoro coding",
             "room": "vibe"
         },
         {
