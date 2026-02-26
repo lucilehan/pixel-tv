@@ -40,6 +40,11 @@
                 "command": "pixelTv.statusBarMenu",
                 "title": "Pixel TV: Now Playing / Change Room",
                 "category": "Pixel TV"
+            },
+            {
+                "command": "pixelTv.resetExtensionData",
+                "title": "Pixel TV: Reset Extension Data",
+                "category": "Pixel TV"
             }
         ],
         "keybindings": [

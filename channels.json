@@ -143,30 +143,22 @@
         },
         {
             "id": "dp8PhLsUcFE",
-            "title": "Bloomberg Global Financial News Live",
-            "ch": "Bloomberg Live",
+            "title": "Bloomberg Global Global News",
+            "ch": "Bloomberg",
             "dur": "LIVE",
             "tags": "news tech finance stocks bloomberg business",
             "room": "tech"
         },
         {
-            "id": "w_Ma8oQLmSM",
-            "title": "Live: Reuters Tech & World News",
-            "ch": "Reuters",
-            "dur": "LIVE",
-            "tags": "news tech finance global world",
-            "room": "tech"
-        },
-        {
-            "id": "XWq5kBlakcQ",
-            "title": "NBC News NOW Live",
-            "ch": "NBC News",
+            "id": "J_SveY4M-R0",
+            "title": "CNA 24/7 Live News",
+            "ch": "CNA",
             "dur": "LIVE",
             "tags": "news tech world current updates",
             "room": "tech"
         },
         {
-            "id": "zVqmacNmX0U",
+            "id": "L_LUpfSNCpY",
             "title": "FashionTV Live 24/7",
             "ch": "FashionTV",
             "dur": "LIVE",
@@ -174,27 +166,19 @@
             "room": "fashion"
         },
         {
-            "id": "a4mB1gG5Mww",
-            "title": "Vogue Runway Compilation 24/7",
-            "ch": "Vogue",
+            "id": "W_v-Yv_m2X8",
+            "title": "The Fashion Channel Live",
+            "ch": "Fashion Channel",
             "dur": "LIVE",
             "tags": "fashion runway style vibe design",
             "room": "fashion"
         },
         {
-            "id": "9Auq9mYxFEE",
-            "title": "Sky Sports News Live",
-            "ch": "Sky Sports",
+            "id": "9Auq9mY9CYY",
+            "title": "Sky News Live (UK)",
+            "ch": "Sky News",
             "dur": "LIVE",
-            "tags": "sports espn highlights soccer basketball tennis",
-            "room": "sports"
-        },
-        {
-            "id": "XkQcK5b1q9k",
-            "title": "TalkSport Radio Live Stream",
-            "ch": "TalkSport",
-            "dur": "LIVE",
-            "tags": "sports radio football premier highlights",
+            "tags": "news world sports headlines",
             "room": "sports"
         }
     ]

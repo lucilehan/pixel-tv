@@ -36,7 +36,9 @@ const FALLBACK_CONFIG: ChannelConfig = {
     { id: "jfKfPfyJRdk", title: "lofi hip hop radio – beats to relax/study to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi dark academia chill relax study beats", room: "library" },
     { id: "4m_oTMFpJOE", title: "Synthwave Radio – beats to chill/drive to", ch: "Synthwave Plaza", dur: "LIVE", tags: "gaming synthwave retrowave electronic music", room: "mission" },
     { id: "5tUCmMM9S4E", title: "Brain Food – Deep Focus Music 24/7", ch: "Brain Food", dur: "LIVE", tags: "study vibe focus vibecoding coding work", room: "vibe" },
-    { id: "dp8PhLsUcFE", title: "Bloomberg Global Financial News Live", ch: "Bloomberg Live", dur: "LIVE", tags: "news tech finance stocks bloomberg business", room: "tech" }
+    { id: "dp8PhLsUcFE", title: "Bloomberg Global Global News", ch: "Bloomberg", dur: "LIVE", tags: "news tech finance stocks bloomberg business", room: "tech" },
+    { id: "L_LUpfSNCpY", title: "FashionTV Live 24/7", ch: "FashionTV", dur: "LIVE", tags: "fashion runway style vibe clothes model", room: "fashion" },
+    { id: "9Auq9mY9CYY", title: "Sky News Live (UK)", ch: "Sky News", dur: "LIVE", tags: "news world sports headlines", room: "sports" }
   ]
 };
 
@@ -350,6 +352,15 @@ export async function activate(context: vscode.ExtensionContext) {
       if (pick === '🎚 Change Room') { provider.showChannelPicker(); }
       if (pick === '⏹ Stop') { provider.stopPlayback(); }
       if (pick === '📺 Open Pixel TV') { vscode.commands.executeCommand('pixelTv.view.focus'); }
+    })
+  );
+
+  // Temporary helper to reset data for testing first-run experience
+  context.subscriptions.push(
+    vscode.commands.registerCommand('pixelTv.resetExtensionData', async () => {
+      await context.globalState.update('pixelTv.enabledRooms', undefined);
+      await context.globalState.update('pixelTv.lastPlayed', undefined);
+      vscode.window.showInformationMessage('Pixel TV: Storage cleared! Reload the webview to see the setup screen.');
     })
   );
 }
