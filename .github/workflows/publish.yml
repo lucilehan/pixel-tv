@@ -23,8 +23,20 @@ jobs:
       - name: Package extension (.vsix)
         run: npx @vscode/vsce package
 
+      - name: Upload .vsix as GitHub Release asset (for Antigravity installs)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: '*.vsix'
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Publish to VS Code Marketplace
         run: npx @vscode/vsce publish -p ${{ secrets.VSCE_TOKEN }} --packagePath $(ls *.vsix | head -n 1)
+        continue-on-error: true
 
       - name: Publish to Open VSX Registry
         run: npx ovsx publish $(ls *.vsix | head -n 1) -p ${{ secrets.OPEN_VSX_TOKEN }}
+        continue-on-error: true

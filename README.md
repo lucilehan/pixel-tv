@@ -1,6 +1,6 @@
 # 📺 Pixel TV
 
-> Tune into live YouTube streams inside VS Code — like flipping channels on a retro TV. Sits in your Explorer sidebar, remembers your last channel, and shows what's on in the status bar.
+> Tune into live YouTube streams inside your IDE — like flipping channels on a retro TV. Sits in your sidebar, remembers your last channel, and shows what's on in the status bar.
 
 ![Pixel TV](https://github.com/lucilehan/pixel-tv/raw/main/media/preview.png)
 
@@ -8,11 +8,11 @@
 
 ## What it does
 
-Pixel TV sits permanently in your Explorer panel underneath Timeline. Pick a **Room**, click a channel, and it keeps playing while you code.
+Pixel TV sits permanently in your sidebar. Pick a **Room**, click a channel, and it keeps playing while you code.
 
 - **Rooms** — four curated environments (The Café, Rainy Library, Mission Control, Vibe Coding), each with hand-picked 24/7 live streams that match the vibe
-- **Channel Memory** — remembers what you were watching. Reopen VS Code and a "Last Watched" banner lets you resume in one click
-- **Status Bar** — shows what's on in the bottom bar at all times. Click it to change room or stop without opening the sidebar
+- **Channel Memory** — remembers what you were watching. Reopen your IDE and a "Last Watched" banner lets you resume in one click
+- **Status Bar** — shows what's on at all times. Click it to change room or stop without opening the sidebar
 
 Think of it less like a video player and more like a TV set that happens to live in your editor — you don't search for content, you just change the channel.
 
@@ -20,19 +20,39 @@ Think of it less like a video player and more like a TV set that happens to live
 
 ## Installation
 
-Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=lucilehan.pixel-tv) or search **"Pixel TV"** in the Extensions sidebar.
+### Antigravity IDE
 
-Or install manually from a `.vsix`:
+Install directly from the command line:
 
 ```bash
-code --install-extension pixel-tv-1.0.1.vsix
+antigravity --install-extension https://github.com/lucilehan/pixel-tv/releases/latest/download/pixel-tv.vsix
 ```
+
+Or install a `.vsix` file manually:
+
+```bash
+antigravity --install-extension pixel-tv-1.0.2.vsix
+```
+
+### VS Code
+
+Available on the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=lucilehan.pixel-tv) — search **"Pixel TV"** in the Extensions sidebar.
+
+Or install a `.vsix` file manually:
+
+```bash
+code --install-extension pixel-tv-1.0.2.vsix
+```
+
+### Open VSX (Gitpod, Codium, etc.)
+
+Available on the [Open VSX Registry](https://open-vsx.org/extension/lucilehan/pixel-tv) — search **"Pixel TV"** in the Extensions sidebar.
 
 ---
 
 ## Usage
 
-Open the Explorer panel (`Cmd+Shift+E`) and scroll down to **Pixel TV** — or jump to it directly:
+Open the Explorer panel and scroll down to **Pixel TV** — or use the keyboard shortcut:
 
 | Action | macOS | Windows / Linux |
 |--------|-------|-----------------|
@@ -59,14 +79,14 @@ Four named environments, each with curated 24/7 live streams:
 
 ## Live Stream Search (optional)
 
-If you want to search beyond the built-in channels, add a free YouTube Data API v3 key in Settings and the search bar will pull live streams directly from YouTube.
+If you want to search beyond the built-in channels, add a free YouTube Data API v3 key in Settings — the search bar will then pull live streams directly from YouTube.
 
 **To set up:**
 1. Go to [console.cloud.google.com](https://console.cloud.google.com) and create a free API key with YouTube Data API v3 enabled
-2. Open VS Code Settings (`Cmd+,`) and search `pixelTv`
+2. Open your IDE settings and search `pixelTv`
 3. Paste your key into **Pixel TV: Youtube Api Key**
 
-Your key is stored locally in VS Code's settings and never committed to any repository.
+Your key is stored locally in your IDE's settings and never committed to any repository.
 
 Without a key, the search bar filters the built-in channel list only.
 
@@ -81,8 +101,6 @@ npm install
 npm run compile
 ```
 
-Press `F5` in VS Code to launch in debug mode.
-
 To package:
 
 ```bash
@@ -92,14 +110,24 @@ vsce package
 
 ---
 
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+- **Bug reports / feature requests** — open an [Issue](https://github.com/lucilehan/pixel-tv/issues)
+- **Code changes** — fork → branch → PR against `main`
+
+---
+
 ## Changelog
 
 ### 1.0.2
 - **Rooms** — genre chips replaced with four named rooms: ☕ The Café, 🌧 Rainy Library, 🚀 Mission Control, 🧑‍💻 Vibe Coding. Each room has its own vibe description and curated channels
-- **Channel Memory** — Pixel TV remembers what you were watching. On reload, a "Last Watched" banner appears on screen so you can resume in one click
-- **Status Bar** — a live indicator appears in the VS Code status bar showing what's on. Click it to change room or stop playback without opening the sidebar
+- **Channel Memory** — Pixel TV remembers what you were watching. On reload, a "Last Watched" banner appears so you can resume in one click
+- **Status Bar** — a live indicator shows what's on. Click it to change room or stop playback without opening the sidebar
 - Refreshed channel list organized by room
 - "LIVE CHANNELS" header renamed to "ON AIR"
+- Security hardening: CSP nonces, videoId validation, XSS-safe DOM rendering, local server protections
 
 ### 1.0.1
 - Moved into the **Explorer sidebar** underneath Timeline
@@ -107,8 +135,6 @@ vsce package
 - Optional YouTube API key for live stream search
 - Local HTTP server to enable in-editor YouTube playback
 - Fixed layout stability — panel size never shifts on interaction
-- Refreshed channel list with only persistent 24/7 streams
-- Updated icon and screenshot
 
 ### 1.0.0
 - Initial release
