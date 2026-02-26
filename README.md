@@ -121,6 +121,10 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## Changelog
 
+### 1.0.3
+- Registry Hotfix: Bumped version to resolve a publication conflict on Open VSX.
+- GitHub Releases: Added automated `.vsix` attachments for direct Antigravity installs.
+
 ### 1.0.2
 - **Rooms** — genre chips replaced with four named rooms: ☕ The Café, 🌧 Rainy Library, 🚀 Mission Control, 🧑‍💻 Vibe Coding. Each room has its own vibe description and curated channels
 - **Channel Memory** — Pixel TV remembers what you were watching. On reload, a "Last Watched" banner appears so you can resume in one click

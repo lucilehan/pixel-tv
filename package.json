@@ -2,7 +2,7 @@
     "name": "pixel-tv",
     "displayName": "Pixel TV",
     "description": "Tune into live YouTube streams inside VS Code — like flipping channels on a retro TV",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "publisher": "lucilehan",
     "repository": {
         "type": "git",
