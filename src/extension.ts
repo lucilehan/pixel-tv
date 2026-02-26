@@ -62,6 +62,92 @@ async function fetchDynamicConfig(): Promise<ChannelConfig> {
   });
 }
 
+// ── Local server ───────────────────────────────────────────────────────────────
+let server: http.Server | undefined;
+let serverPort: number | undefined;
+
+function getPlayerHtml(videoId: string, port: number): string {
+  // Pass the local server as the origin to satisfy YouTube's referer checks
+  const origin = `http://127.0.0.1:${port}`;
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; background:#000; overflow:hidden; }
+  iframe { width:100%; height:100%; border:none; display:block; }
+</style>
+</head>
+<body>
+<iframe
+  src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&origin=${encodeURIComponent(origin)}"
+  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+  allowfullscreen
+  referrerpolicy="strict-origin-when-cross-origin"
+  style="width:100%;height:100%;border:none;display:block;">
+</iframe>
+</body>
+</html>`;
+}
+
+async function findFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.listen(0, '127.0.0.1', () => {
+      const port = (srv.address() as net.AddressInfo).port;
+      srv.close(() => resolve(port));
+    });
+    srv.on('error', reject);
+  });
+}
+
+async function startServer(): Promise<number> {
+  if (server && serverPort) { return serverPort; }
+  const port = await findFreePort();
+  server = http.createServer((req, res) => {
+    if (req.method !== 'GET') {
+      res.writeHead(405);
+      res.end();
+      return;
+    }
+
+    const host = req.headers.host || '';
+    if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) {
+      res.writeHead(403);
+      res.end();
+      return;
+    }
+
+    const url = new URL(req.url || '/', `http://127.0.0.1:${port}`);
+    const rawVideoId = url.searchParams.get('v') || '';
+    const videoIdMatch = rawVideoId.match(/^[a-zA-Z0-9_-]{11}$/);
+    const videoId = videoIdMatch ? videoIdMatch[0] : '';
+
+    if (!videoId) {
+      res.writeHead(400);
+      res.end('Invalid Video ID');
+      return;
+    }
+
+    res.writeHead(200, {
+      'Content-Type': 'text/html',
+      'Access-Control-Allow-Origin': '*',
+      'Content-Security-Policy': "frame-src https://www.youtube-nocookie.com https://www.youtube.com; default-src 'none'; style-src 'unsafe-inline';"
+    });
+    res.end(getPlayerHtml(videoId, port));
+  });
+  await new Promise<void>((resolve) => server!.listen(port, '127.0.0.1', resolve));
+  serverPort = port;
+  return port;
+}
+
+function stopServer() {
+  server?.close();
+  server = undefined;
+  serverPort = undefined;
+}
+
 // ── YouTube API search ────────────────────────────────────────────────────────
 function httpsGet(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -136,6 +222,7 @@ function updateStatusBar(last: LastPlayed | null) {
 class PixelTvViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewId = 'pixelTv.view';
   private _view?: vscode.WebviewView;
+  private _port?: number;
   private _context: vscode.ExtensionContext;
   private _config?: ChannelConfig;
 
@@ -168,6 +255,7 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken
   ) {
     this._view = webviewView;
+    this._port = await startServer();
     webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
 
     // Fetch dynamic config
@@ -177,21 +265,21 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
     const enabledRooms = this._context.globalState.get<string[]>('pixelTv.enabledRooms');
     const lastPlayed: LastPlayed | undefined = this._context.globalState.get('pixelTv.lastPlayed');
 
-    webviewView.webview.html = getWebviewContent(this._config, lastPlayed, enabledRooms);
+    webviewView.webview.html = getWebviewContent(this._port, this._config, lastPlayed, enabledRooms);
 
     webviewView.webview.onDidReceiveMessage(async (msg) => {
 
       if (msg.type === 'saveSettings') {
         await this._context.globalState.update('pixelTv.enabledRooms', msg.enabledRooms);
         // Reload webview with newly pinned rooms
-        webviewView.webview.html = getWebviewContent(this._config!, lastPlayed, msg.enabledRooms);
+        webviewView.webview.html = getWebviewContent(this._port!, this._config!, lastPlayed, msg.enabledRooms);
       }
 
       if (msg.type === 'playVideo') {
         const videoIdMatch = String(msg.videoId).match(/^[a-zA-Z0-9_-]{11}$/);
         const safeId = videoIdMatch ? videoIdMatch[0] : '';
         if (safeId) {
-          const url = `https://www.youtube.com/embed/${safeId}?autoplay=1&rel=0&modestbranding=1`;
+          const url = `http://127.0.0.1:${this._port}/?v=${safeId}`;
           this._view?.webview.postMessage({ type: 'loadPlayer', url });
           // Persist last played
           const last: LastPlayed = { videoId: safeId, title: msg.title, room: msg.room };
@@ -280,6 +368,7 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
+  stopServer();
   statusBarItem?.dispose();
 }
 
@@ -294,6 +383,7 @@ function getNonce(): string {
 }
 
 function getWebviewContent(
+  port: number,
   config: ChannelConfig,
   lastPlayed?: LastPlayed,
   enabledRooms?: string[]
@@ -316,7 +406,7 @@ function getWebviewContent(
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src https://www.youtube.com https://www.youtube-nocookie.com; img-src https://i.ytimg.com https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'nonce-${nonce}';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src http://127.0.0.1:${port} http://localhost:${port}; img-src https://i.ytimg.com https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'nonce-${nonce}';">
 <title>Pixel TV</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
