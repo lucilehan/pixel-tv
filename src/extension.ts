@@ -3,6 +3,63 @@ import * as http from 'http';
 import * as https from 'https';
 import * as net from 'net';
 
+// ── Remote Configuration ──────────────────────────────────────────────────────
+const REMOTE_CHANNELS_URL = 'https://raw.githubusercontent.com/lucilehan/pixel-tv/main/channels.json';
+
+interface RoomDef {
+  id: string;
+  label: string;
+  desc: string;
+  tags: string;
+}
+
+interface ChannelConfig {
+  version: string;
+  rooms: RoomDef[];
+  videos: VideoItem[];
+}
+
+// Fallback configuration if fetch fails
+const FALLBACK_CONFIG: ChannelConfig = {
+  version: '1.1.0-fallback',
+  rooms: [
+    { id: 'cafe', label: '☕ The Café', desc: 'A corner table by the window. It\'s raining.', tags: 'jazz bossa nova coffee' },
+    { id: 'library', label: '🌧 Rainy Library', desc: 'Dark academia. Lamp on. Pages turning.', tags: 'lofi dark academia chill' },
+    { id: 'mission', label: '🚀 Mission Control', desc: 'Synthwave and neon. Somewhere in the future.', tags: 'gaming synthwave retrowave' },
+    { id: 'vibe', label: '🧑‍💻 Vibe Coding', desc: 'Others are coding too. You\'re not alone.', tags: 'study vibe focus vibecoding' },
+    { id: 'tech', label: '📰 Tech News', desc: 'Live tech updates and stock coverage.', tags: 'news tech finance stocks bloomberg' },
+    { id: 'fashion', label: '👗 Fashion', desc: 'Runway shows and lo-fi fashion streams.', tags: 'fashion runway style vibe' },
+    { id: 'sports', label: '🏅 Sports', desc: 'Live scores, highlights, and sports radio.', tags: 'sports espn highlights soccer basketball' }
+  ],
+  videos: [
+    { id: "Dx5qFachd3A", title: "Jazz & Bossa Nova – Coffee Shop Radio", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee relax chill music", room: "cafe" },
+    { id: "jfKfPfyJRdk", title: "lofi hip hop radio – beats to relax/study to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi dark academia chill relax study beats", room: "library" },
+    { id: "4m_oTMFpJOE", title: "Synthwave Radio – beats to chill/drive to", ch: "Synthwave Plaza", dur: "LIVE", tags: "gaming synthwave retrowave electronic music", room: "mission" },
+    { id: "5tUCmMM9S4E", title: "Brain Food – Deep Focus Music 24/7", ch: "Brain Food", dur: "LIVE", tags: "study vibe focus vibecoding coding work", room: "vibe" },
+    { id: "dp8PhLsUcFE", title: "Bloomberg Global Financial News Live", ch: "Bloomberg Live", dur: "LIVE", tags: "news tech finance stocks bloomberg business", room: "tech" }
+  ]
+};
+
+async function fetchDynamicConfig(): Promise<ChannelConfig> {
+  return new Promise((resolve) => {
+    https.get(REMOTE_CHANNELS_URL, (res) => {
+      let data = '';
+      if (res.statusCode !== 200) {
+        resolve(FALLBACK_CONFIG);
+        return;
+      }
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          resolve(FALLBACK_CONFIG);
+        }
+      });
+    }).on('error', () => resolve(FALLBACK_CONFIG));
+  });
+}
+
 // ── Local server ───────────────────────────────────────────────────────────────
 let server: http.Server | undefined;
 let serverPort: number | undefined;
@@ -129,39 +186,14 @@ interface LastPlayed {
   room: string;
 }
 
-// ── Rooms (replaces genre chips) ──────────────────────────────────────────────
-const ROOMS = [
-  { id: 'cafe', label: '☕ The Café', desc: 'A corner table by the window. It\'s raining.', tags: 'jazz bossa nova coffee' },
-  { id: 'library', label: '🌧 Rainy Library', desc: 'Dark academia. Lamp on. Pages turning.', tags: 'lofi dark academia chill' },
-  { id: 'mission', label: '🚀 Mission Control', desc: 'Synthwave and neon. Somewhere in the future.', tags: 'gaming synthwave retrowave' },
-  { id: 'vibe', label: '🧑‍💻 Vibe Coding', desc: 'Others are coding too. You\'re not alone.', tags: 'study vibe focus vibecoding' },
-];
-
-// ── Curated 24/7 live streams ─────────────────────────────────────────────────
-const CURATED_LIVE: VideoItem[] = [
-  // ☕ The Café
-  { id: "Dx5qFachd3A", title: "Jazz & Bossa Nova – Coffee Shop Radio", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee relax chill music", room: "cafe" },
-  { id: "DWcJFNfaw9c", title: "Coffee Shop Radio – Jazz & Bossa Nova", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee cafe chill music", room: "cafe" },
-  { id: "TbFrCUMFaZ8", title: "Jazz Piano Radio – Relaxing Music 24/7", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz piano relax smooth music chill", room: "cafe" },
-  // 🌧 Rainy Library
-  { id: "jfKfPfyJRdk", title: "lofi hip hop radio – beats to relax/study to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi dark academia chill relax study beats", room: "library" },
-  { id: "5qap5aO4i9A", title: "lofi hip hop radio – beats to sleep/chill to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi dark academia chill sleep beats music", room: "library" },
-  { id: "kgx4WGK0oNU", title: "Chillhop Radio – jazzy & lofi beats", ch: "Chillhop Music", dur: "LIVE", tags: "lofi dark academia chillhop chill beats", room: "library" },
-  // 🚀 Mission Control
-  { id: "4m_oTMFpJOE", title: "Synthwave Radio – beats to chill/drive to", ch: "Synthwave Plaza", dur: "LIVE", tags: "gaming synthwave retrowave electronic music", room: "mission" },
-  { id: "MVPTGNGiI-4", title: "Chillstep Radio – 24/7 Gaming Beats", ch: "Chillstep", dur: "LIVE", tags: "gaming chillstep electronic beats music", room: "mission" },
-  { id: "n61ULEU7CO0", title: "Epic Music Radio – Gaming & Study Beats", ch: "Epic Music", dur: "LIVE", tags: "gaming synthwave epic music beats", room: "mission" },
-  // 🧑‍💻 Vibe Coding
-  { id: "5tUCmMM9S4E", title: "Brain Food – Deep Focus Music 24/7", ch: "Brain Food", dur: "LIVE", tags: "study vibe focus vibecoding coding work", room: "vibe" },
-  { id: "lTRiuFIWV54", title: "Lofi Girl – beats to study/code to", ch: "Lofi Girl", dur: "LIVE", tags: "study vibe focus vibecoding coding lofi", room: "vibe" },
-  { id: "HoWRmBzVMdM", title: "Study With Me – Pomodoro Timer Live", ch: "Study Together", dur: "LIVE", tags: "study vibe with me focus pomodoro coding", room: "vibe" },
-];
-
 // ── Status bar ────────────────────────────────────────────────────────────────
 let statusBarItem: vscode.StatusBarItem | undefined;
 
 function createStatusBar(context: vscode.ExtensionContext) {
-  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  // Use a very high priority to force it to the far right.
+  // Note: VS Code strictly pins status bars to the bottom edge by default. 
+  // 'Right' alignment pushes it to the bottom-right corner.
+  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 10000);
   statusBarItem.command = 'pixelTv.statusBarMenu';
   context.subscriptions.push(statusBarItem);
   updateStatusBar(null);
@@ -187,6 +219,7 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
   private _port?: number;
   private _context: vscode.ExtensionContext;
+  private _config?: ChannelConfig;
 
   constructor(context: vscode.ExtensionContext) {
     this._context = context;
@@ -199,10 +232,11 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
   }
 
   public showChannelPicker() {
-    const rooms = ROOMS.map(r => r.label);
+    if (!this._config) return;
+    const rooms = this._config.rooms.map(r => r.label);
     vscode.window.showQuickPick(rooms, { placeHolder: 'Switch to a room…' }).then(pick => {
       if (!pick) { return; }
-      const room = ROOMS.find(r => r.label === pick);
+      const room = this._config!.rooms.find(r => r.label === pick);
       if (room) {
         this._view?.webview.postMessage({ type: 'switchRoom', roomId: room.id });
         vscode.commands.executeCommand('pixelTv.view.focus');
@@ -220,11 +254,22 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
 
-    // Restore last played from global state
+    // Fetch dynamic config
+    this._config = await fetchDynamicConfig();
+
+    // Check Global State for user's pinned rooms and last played state
+    const enabledRooms = this._context.globalState.get<string[]>('pixelTv.enabledRooms');
     const lastPlayed: LastPlayed | undefined = this._context.globalState.get('pixelTv.lastPlayed');
-    webviewView.webview.html = getWebviewContent(this._port, CURATED_LIVE, ROOMS, lastPlayed);
+
+    webviewView.webview.html = getWebviewContent(this._port, this._config, lastPlayed, enabledRooms);
 
     webviewView.webview.onDidReceiveMessage(async (msg) => {
+
+      if (msg.type === 'saveSettings') {
+        await this._context.globalState.update('pixelTv.enabledRooms', msg.enabledRooms);
+        // Reload webview with newly pinned rooms
+        webviewView.webview.html = getWebviewContent(this._port!, this._config!, lastPlayed, msg.enabledRooms);
+      }
 
       if (msg.type === 'playVideo') {
         const videoIdMatch = String(msg.videoId).match(/^[a-zA-Z0-9_-]{11}$/);
@@ -250,10 +295,11 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
 
         if (!apiKey) {
           const q = safeQuery.toLowerCase();
-          const results = CURATED_LIVE.filter(v => (v.title + v.ch + v.tags).toLowerCase().includes(q));
+          const cur = this._config!.videos;
+          const results = cur.filter(v => (v.title + v.ch + v.tags).toLowerCase().includes(q));
           this._view?.webview.postMessage({
             type: 'searchResults',
-            results: results.length > 0 ? results : CURATED_LIVE,
+            results: results.length > 0 ? results : cur,
             noApiKey: true,
           });
           return;
@@ -270,14 +316,11 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
         vscode.commands.executeCommand('workbench.action.openSettings', 'pixelTv.youtubeApiKey');
       }
 
-      // Webview reports its natural pixel height — reveal the view so VS Code
-      // allocates enough space for the full widget on first load
       if (msg.type === 'setHeight') {
-        webviewView.show(true); // preserve focus, just ensure panel is expanded
+        webviewView.show(true);
       }
     });
 
-    // If something was playing, restore status bar
     if (lastPlayed) { updateStatusBar(lastPlayed); }
   }
 }
@@ -296,7 +339,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   createStatusBar(context);
 
-  // Status bar click → quick pick: change room or stop
   context.subscriptions.push(
     vscode.commands.registerCommand('pixelTv.statusBarMenu', async () => {
       const last: LastPlayed | undefined = context.globalState.get('pixelTv.lastPlayed');
@@ -329,13 +371,21 @@ function getNonce(): string {
 
 function getWebviewContent(
   port: number,
-  videos: VideoItem[],
-  rooms: typeof ROOMS,
-  lastPlayed?: LastPlayed
+  config: ChannelConfig,
+  lastPlayed?: LastPlayed,
+  enabledRooms?: string[]
 ): string {
   const nonce = getNonce();
-  const videosJson = JSON.stringify(videos);
-  const roomsJson = JSON.stringify(rooms);
+  // Filter available rooms strictly based on user selection (or all if not setup yet)
+  const isFirstRun = enabledRooms === undefined;
+
+  const displayRooms = isFirstRun
+    ? config.rooms
+    : config.rooms.filter(r => enabledRooms.includes(r.id));
+
+  const videosJson = JSON.stringify(config.videos);
+  const roomsJson = JSON.stringify(displayRooms);
+  const allRoomsJson = JSON.stringify(config.rooms);
   const lastJson = JSON.stringify(lastPlayed || null);
 
   return /* html */`<!DOCTYPE html>
@@ -369,10 +419,27 @@ function getWebviewContent(
   }
 
   * { box-sizing:border-box; margin:0; padding:0; }
-  /* Let body height be natural so VS Code measures it and sizes the panel correctly */
   html, body { width:100%; background:#100c08; overflow:hidden; font-family:monospace; }
 
-  .tv-wrap { display:flex; flex-direction:column; width:100%; background-color:var(--wood-1); background-image:repeating-linear-gradient(90deg, transparent 0px, transparent 18px, rgba(0,0,0,0.07) 18px, rgba(0,0,0,0.07) 19px, transparent 19px, transparent 32px, rgba(255,255,255,0.04) 32px, rgba(255,255,255,0.04) 33px); border:3px solid var(--wood-edge); box-shadow:inset 3px 3px 0 var(--wood-3), inset -3px -3px 0 var(--wood-5); padding:8px; overflow:hidden; }
+  /* ── SETUP LAYER ── */
+  #setupLayer { position:absolute; inset:0; z-index:100; background:#080a06; display:${isFirstRun ? 'flex' : 'none'}; flex-direction:column; padding:12px; font-family:'VT323',monospace; }
+  .setup-title { font-family:'Press Start 2P',monospace; font-size:8px; color:var(--col-amber); margin-bottom:12px; text-shadow:2px 2px 0 #5a3408; text-align:center; line-height:1.5; }
+  .setup-sub { color:var(--text-bright); font-size:12px; margin-bottom:12px; opacity:0.8; text-align:center; }
+  .setup-list { flex:1; overflow-y:auto; border:2px inset #1a1c28; background:#040605; padding:4px; display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+  .setup-list::-webkit-scrollbar { width:4px; }
+  .setup-list::-webkit-scrollbar-thumb { background:var(--bez-2); }
+  .setup-item { display:flex; align-items:flex-start; gap:8px; padding:6px; border:1px solid #1a1a10; cursor:pointer; }
+  .setup-item:hover { background:#0a0d08; border-color:#2a2a1a; }
+  .setup-chk { width:14px; height:14px; accent-color:var(--col-amber); flex-shrink:0; cursor:pointer; margin-top:2px; }
+  .setup-meta { flex:1; }
+  .setup-lbl { font-family:'Press Start 2P',monospace; font-size:6px; color:#c87a35; display:block; margin-bottom:4px; }
+  .setup-desc { font-size:11px; color:var(--text-dim); }
+  .setup-btns { display:flex; gap:8px; justify-content:flex-end; }
+  .setup-btn { font-family:'Press Start 2P',monospace; font-size:6px; padding:8px 12px; background:#0c1410; color:var(--col-amber); border:1px solid var(--col-amber); cursor:pointer; box-shadow:var(--glow-amber); }
+  .setup-btn:hover { background:#141a10; }
+
+  /* ── TV MAIN SYSTEM ── */
+  .tv-wrap { display:${isFirstRun ? 'none' : 'flex'}; flex-direction:column; width:100%; height:100%; background-color:var(--wood-1); background-image:repeating-linear-gradient(90deg, transparent 0px, transparent 18px, rgba(0,0,0,0.07) 18px, rgba(0,0,0,0.07) 19px, transparent 19px, transparent 32px, rgba(255,255,255,0.04) 32px, rgba(255,255,255,0.04) 33px); border:3px solid var(--wood-edge); box-shadow:inset 3px 3px 0 var(--wood-3), inset -3px -3px 0 var(--wood-5); padding:8px; overflow:hidden; }
 
   .tv-nameplate { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; padding:0 2px; flex-shrink:0; }
   .tv-brand { font-family:'Press Start 2P',monospace; font-size:5px; letter-spacing:2px; color:var(--wood-3); background:var(--wood-5); border:2px solid var(--wood-edge); padding:3px 6px; text-shadow:0 1px 0 var(--wood-edge); }
@@ -394,7 +461,6 @@ function getWebviewContent(
   @keyframes flicker { 0%,93%,100%{opacity:0.4} 94%{opacity:0.1} 95%{opacity:0.4} 97%{opacity:0.08} 98%{opacity:0.35} }
   .idle-sub { font-size:4px; color:#2a2a40; font-family:'Press Start 2P',monospace; margin-top:4px; }
 
-  /* Resume banner shown on reload when last session is remembered */
   .resume-banner { position:absolute; inset:0; z-index:6; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:rgba(5,8,10,0.88); }
   .resume-banner.hidden { display:none; }
   .resume-label { font-family:'VT323',monospace; font-size:12px; color:var(--col-amber); opacity:0.7; letter-spacing:2px; }
@@ -420,7 +486,6 @@ function getWebviewContent(
   @keyframes ledPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
   .np-title { font-size:3px; color:var(--text-bright); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0; width:0; }
 
-  /* API key banner */
   .api-banner { display:none; align-items:center; justify-content:space-between; padding:4px 6px; background:#0c0806; border-top:1px solid #3e2208; gap:4px; flex-shrink:0; }
   .api-banner.visible { display:flex; }
   .api-banner-text { font-family:'Press Start 2P',monospace; font-size:6px; color:#8a5418; flex:1; }
@@ -435,9 +500,10 @@ function getWebviewContent(
   .search-btn { font-family:'Press Start 2P',monospace; font-size:4px; padding:3px 6px; background:#0c1410; color:var(--col-amber); border:1px solid var(--col-amber); box-shadow:var(--glow-amber); cursor:pointer; height:20px; opacity:0.8; flex-shrink:0; }
   .search-btn:hover { opacity:1; }
 
-  /* Rooms bar */
-  .rooms-bar { display:flex; flex-direction:column; padding:4px; background:#040605; border-top:1px solid #0e110e; flex-shrink:0; gap:2px; }
-  .room-chip { font-family:'Press Start 2P',monospace; font-size:6px; padding:5px 8px; border:1px solid #1a1a10; background:#080a06; color:#b06a2a; cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+  .rooms-bar { display:flex; flex-direction:column; padding:4px; background:#040605; border-top:1px solid #0e110e; flex-shrink:0; gap:2px; max-height:100px; overflow-y:auto; }
+  .rooms-bar::-webkit-scrollbar { width:3px; }
+  .rooms-bar::-webkit-scrollbar-thumb { background:#2a2a1a; }
+  .room-chip { font-family:'Press Start 2P',monospace; font-size:6px; padding:5px 8px; border:1px solid #1a1a10; background:#080a06; color:#b06a2a; cursor:pointer; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
   .room-chip:hover { border-color:#c87a35; color:#c87a35; }
   .room-chip.active { background:#10080e; border-color:var(--col-purple); color:var(--col-purple); }
   .room-desc { font-family:'VT323',monospace; font-size:10px; color:var(--text-dim); font-weight:normal; }
@@ -467,10 +533,27 @@ function getWebviewContent(
   .result-ch { font-size:3px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; font-family:'Press Start 2P',monospace; }
   .result-dur { font-family:'Press Start 2P',monospace; font-size:4px; color:var(--col-red); opacity:0.8; flex-shrink:0; white-space:nowrap; }
   .error-msg { font-family:'VT323',monospace; font-size:11px; color:#8a3030; padding:6px 8px; background:#0a0404; text-align:center; }
+  
+  .btn-manage-rooms { font-family:'Press Start 2P',monospace; cursor:pointer; color:#4a4a62; font-size:4px; display:inline-block; padding:2px; margin-right:4px; border:1px solid transparent; }
+  .btn-manage-rooms:hover { color:var(--text-bright); border-color:#4a4a62; }
 </style>
 </head>
 <body>
-<div class="tv-wrap">
+
+<!-- SETUP LAYER: Shown on first run -->
+<div id="setupLayer">
+  <div class="setup-title">PIXEL TV<br><span style="color:#5a3408;">INITIAL SETUP</span></div>
+  <div class="setup-sub">Select the rooms you want available in your channel listing.</div>
+  
+  <div class="setup-list" id="setupList"></div>
+  
+  <div class="setup-btns">
+    <button class="setup-btn" id="finishSetupBtn">SAVE & TUNE IN</button>
+  </div>
+</div>
+
+<!-- MAIN TV UI -->
+<div class="tv-wrap" id="tvWrap">
 
   <div class="tv-nameplate">
     <div class="tv-screws"><div class="screw"></div><div class="screw"></div></div>
@@ -485,7 +568,6 @@ function getWebviewContent(
         <div class="idle-label">NO SIGNAL</div>
         <div class="idle-sub">PICK A ROOM</div>
       </div>
-      <!-- Resume banner: shown on reload if last session exists -->
       <div class="resume-banner hidden" id="resumeBanner">
         <div class="resume-label">⟳ LAST WATCHED</div>
         <div class="resume-title" id="resumeTitle"></div>
@@ -517,12 +599,12 @@ function getWebviewContent(
     <button class="search-btn" id="searchBtn">TUNE</button>
   </div>
 
-  <!-- Rooms replace genre chips -->
   <div class="rooms-bar" id="roomsBar"></div>
 
   <div class="results-header">
     <span class="results-label">ON AIR</span>
     <div class="results-count-wrap">
+      <span class="btn-manage-rooms" id="manageRoomsBtn" title="Manage Rooms">⚙️</span>
       <span class="live-badge">● LIVE</span>
       <span class="results-count" id="resultsCount">0</span>
     </div>
@@ -547,20 +629,74 @@ function getWebviewContent(
   const roomsBar      = document.getElementById('roomsBar');
   const resumeBanner  = document.getElementById('resumeBanner');
   const resumeTitle   = document.getElementById('resumeTitle');
+  
+  const setupLayer    = document.getElementById('setupLayer');
+  const tvWrap        = document.getElementById('tvWrap');
+  const setupList     = document.getElementById('setupList');
 
   const allVideos  = ${videosJson};
-  const allRooms   = ${roomsJson};
+  const activeRooms= ${roomsJson};
+  const allRoomsDef= ${allRoomsJson};
   const lastPlayed = ${lastJson};
 
   let activeRoomId = null;
 
-  // ── Helpers ──
   function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  // ── Setup UI Logic ──
+  function populateSetup() {
+    setupList.innerHTML = '';
+    // If not first run, pre-check the ones currently active
+    const curEnabled = activeRooms.map(r => r.id);
+    const isFirstRun = curEnabled.length === 0 && allRoomsDef.length > 0;
+    
+    allRoomsDef.forEach(room => {
+      const isChecked = isFirstRun ? true : curEnabled.includes(room.id);
+      
+      const item = document.createElement('label');
+      item.className = 'setup-item';
+      item.innerHTML = \`
+        <input type="checkbox" class="setup-chk" value="\${room.id}" \${isChecked ? 'checked' : ''}/>
+        <div class="setup-meta">
+          <span class="setup-lbl">\${escHtml(room.label)}</span>
+          <span class="setup-desc">\${escHtml(room.desc)}</span>
+        </div>
+      \`;
+      setupList.appendChild(item);
+    });
+  }
+
+  document.getElementById('finishSetupBtn').addEventListener('click', () => {
+    const checked = Array.from(document.querySelectorAll('.setup-chk:checked')).map(cb => cb.value);
+    // At least one room must be checked
+    if (checked.length === 0 && allRoomsDef.length > 0) {
+      alert("Please select at least one room!");
+      return;
+    }
+    
+    // Save to globalState via extension host logic
+    vscode.postMessage({ type: 'saveSettings', enabledRooms: checked });
+    
+    // Smooth transition
+    setupLayer.style.display = 'none';
+    tvWrap.style.display = 'flex';
+  });
+
+  document.getElementById('manageRoomsBtn').addEventListener('click', () => {
+    populateSetup();
+    tvWrap.style.display = 'none';
+    setupLayer.style.display = 'flex';
+  });
+
+  // Init setup UI if displayed
+  if (setupLayer.style.display !== 'none') {
+    populateSetup();
+  }
+
   // ── Build rooms bar ──
-  allRooms.forEach(room => {
+  activeRooms.forEach(room => {
     const chip = document.createElement('div');
     chip.className = 'room-chip';
     chip.dataset.roomId = room.id;
@@ -577,12 +713,11 @@ function getWebviewContent(
     searchInput.value = '';
   }
 
-  // ── Render results ──
   function renderResults(videos, showBanner) {
     resultsList.innerHTML = '';
     resultsCount.textContent = videos.length;
     apiBanner.classList.toggle('visible', !!showBanner);
-    const shown = videos.slice(0, activeRoomId ? videos.length : 3);
+    const shown = videos;
     shown.forEach(r => {
       const item = document.createElement('div');
       item.className = 'result-item';
@@ -601,7 +736,6 @@ function getWebviewContent(
     });
   }
 
-  // ── Play ──
   function playVideo(item, r) {
     document.querySelectorAll('.result-item').forEach(el => el.classList.remove('selected'));
     item.classList.add('selected');
@@ -611,12 +745,11 @@ function getWebviewContent(
     void loadingFill.offsetWidth;
     loadingFill.style.animation = 'loadingAnim 0.5s ease-in-out forwards';
     loadingOverlay.classList.add('visible');
-    const roomLabel = allRooms.find(rm => rm.id === r.room)?.label || '';
+    const roomLabel = activeRooms.find(rm => rm.id === r.room)?.label || '';
     vscode.postMessage({ type: 'playVideo', videoId: r.id, title: r.title, room: roomLabel });
     npTitle.textContent = r.title;
   }
 
-  // ── Resume banner ──
   if (lastPlayed) {
     idleScreen.style.display = 'none';
     resumeTitle.textContent  = lastPlayed.title;
@@ -626,7 +759,6 @@ function getWebviewContent(
       const video = allVideos.find(v => v.id === lastPlayed.videoId);
       resumeBanner.classList.add('hidden');
       if (video) {
-        // Find and highlight its list item if visible, else just play
         const fakeItem = document.createElement('div');
         playVideo(fakeItem, video);
       }
@@ -639,7 +771,6 @@ function getWebviewContent(
     });
   }
 
-  // ── Search ──
   function doSearch(q) {
     q = q.trim();
     if (!q) {
@@ -656,7 +787,6 @@ function getWebviewContent(
     vscode.postMessage({ type: 'search', query: q });
   }
 
-  // ── Messages from extension host ──
   window.addEventListener('message', event => {
     const msg = event.data;
 
@@ -702,17 +832,15 @@ function getWebviewContent(
   document.getElementById('searchBtn').addEventListener('click', () => doSearch(searchInput.value));
   searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(searchInput.value); });
 
-  // ── Init: show default 3 or restore last room ──
-  if (!lastPlayed) {
+  // Init: show default 3 or restore last room. Only if setup layer is hidden
+  if (!lastPlayed && setupLayer.style.display === 'none') {
     renderResults(allVideos.slice(0, 3), false);
   }
 
-  // ── Tell VS Code the natural height so the panel expands to fit ──
   function reportHeight() {
     const h = document.body.scrollHeight;
     vscode.postMessage({ type: 'setHeight', height: h });
   }
-  // Report on load and whenever content changes
   reportHeight();
   new ResizeObserver(reportHeight).observe(document.body);
 </script>

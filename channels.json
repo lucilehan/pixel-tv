@@ -1,0 +1,201 @@
+{
+    "version": "1.1.0",
+    "rooms": [
+        {
+            "id": "cafe",
+            "label": "☕ The Café",
+            "desc": "A corner table by the window. It's raining.",
+            "tags": "jazz bossa nova coffee"
+        },
+        {
+            "id": "library",
+            "label": "🌧 Rainy Library",
+            "desc": "Dark academia. Lamp on. Pages turning.",
+            "tags": "lofi dark academia chill"
+        },
+        {
+            "id": "mission",
+            "label": "🚀 Mission Control",
+            "desc": "Synthwave and neon. Somewhere in the future.",
+            "tags": "gaming synthwave retrowave"
+        },
+        {
+            "id": "vibe",
+            "label": "🧑‍💻 Vibe Coding",
+            "desc": "Others are coding too. You're not alone.",
+            "tags": "study vibe focus vibecoding"
+        },
+        {
+            "id": "tech",
+            "label": "📰 Tech News",
+            "desc": "Live tech updates and stock coverage.",
+            "tags": "news tech finance stocks bloomberg"
+        },
+        {
+            "id": "fashion",
+            "label": "👗 Fashion",
+            "desc": "Runway shows and lo-fi fashion streams.",
+            "tags": "fashion runway style vibe"
+        },
+        {
+            "id": "sports",
+            "label": "🏅 Sports",
+            "desc": "Live scores, highlights, and sports radio.",
+            "tags": "sports espn highlights soccer basketball"
+        }
+    ],
+    "videos": [
+        {
+            "id": "Dx5qFachd3A",
+            "title": "Jazz & Bossa Nova – Coffee Shop Radio",
+            "ch": "Cafe Music BGM",
+            "dur": "LIVE",
+            "tags": "jazz bossa nova coffee relax chill music",
+            "room": "cafe"
+        },
+        {
+            "id": "DWcJFNfaw9c",
+            "title": "Coffee Shop Radio – Jazz & Bossa Nova",
+            "ch": "Cafe Music BGM",
+            "dur": "LIVE",
+            "tags": "jazz bossa nova coffee cafe chill music",
+            "room": "cafe"
+        },
+        {
+            "id": "TbFrCUMFaZ8",
+            "title": "Jazz Piano Radio – Relaxing Music 24/7",
+            "ch": "Cafe Music BGM",
+            "dur": "LIVE",
+            "tags": "jazz piano relax smooth music chill",
+            "room": "cafe"
+        },
+        {
+            "id": "jfKfPfyJRdk",
+            "title": "lofi hip hop radio – beats to relax/study to",
+            "ch": "Lofi Girl",
+            "dur": "LIVE",
+            "tags": "lofi dark academia chill relax study beats",
+            "room": "library"
+        },
+        {
+            "id": "5qap5aO4i9A",
+            "title": "lofi hip hop radio – beats to sleep/chill to",
+            "ch": "Lofi Girl",
+            "dur": "LIVE",
+            "tags": "lofi dark academia chill sleep beats music",
+            "room": "library"
+        },
+        {
+            "id": "kgx4WGK0oNU",
+            "title": "Chillhop Radio – jazzy & lofi beats",
+            "ch": "Chillhop Music",
+            "dur": "LIVE",
+            "tags": "lofi dark academia chillhop chill beats",
+            "room": "library"
+        },
+        {
+            "id": "4m_oTMFpJOE",
+            "title": "Synthwave Radio – beats to chill/drive to",
+            "ch": "Synthwave Plaza",
+            "dur": "LIVE",
+            "tags": "gaming synthwave retrowave electronic music",
+            "room": "mission"
+        },
+        {
+            "id": "MVPTGNGiI-4",
+            "title": "Chillstep Radio – 24/7 Gaming Beats",
+            "ch": "Chillstep",
+            "dur": "LIVE",
+            "tags": "gaming chillstep electronic beats music",
+            "room": "mission"
+        },
+        {
+            "id": "n61ULEU7CO0",
+            "title": "Epic Music Radio – Gaming & Study Beats",
+            "ch": "Epic Music",
+            "dur": "LIVE",
+            "tags": "gaming synthwave epic music beats",
+            "room": "mission"
+        },
+        {
+            "id": "5tUCmMM9S4E",
+            "title": "Brain Food – Deep Focus Music 24/7",
+            "ch": "Brain Food",
+            "dur": "LIVE",
+            "tags": "study vibe focus vibecoding coding work",
+            "room": "vibe"
+        },
+        {
+            "id": "lTRiuFIWV54",
+            "title": "Lofi Girl – beats to study/code to",
+            "ch": "Lofi Girl",
+            "dur": "LIVE",
+            "tags": "study vibe focus vibecoding coding lofi",
+            "room": "vibe"
+        },
+        {
+            "id": "HoWRmBzVMdM",
+            "title": "Study With Me – Pomodoro Timer Live",
+            "ch": "Study Together",
+            "dur": "LIVE",
+            "tags": "study vibe with me focus pomodoro coding",
+            "room": "vibe"
+        },
+        {
+            "id": "dp8PhLsUcFE",
+            "title": "Bloomberg Global Financial News Live",
+            "ch": "Bloomberg Live",
+            "dur": "LIVE",
+            "tags": "news tech finance stocks bloomberg business",
+            "room": "tech"
+        },
+        {
+            "id": "w_Ma8oQLmSM",
+            "title": "Live: Reuters Tech & World News",
+            "ch": "Reuters",
+            "dur": "LIVE",
+            "tags": "news tech finance global world",
+            "room": "tech"
+        },
+        {
+            "id": "XWq5kBlakcQ",
+            "title": "NBC News NOW Live",
+            "ch": "NBC News",
+            "dur": "LIVE",
+            "tags": "news tech world current updates",
+            "room": "tech"
+        },
+        {
+            "id": "zVqmacNmX0U",
+            "title": "FashionTV Live 24/7",
+            "ch": "FashionTV",
+            "dur": "LIVE",
+            "tags": "fashion runway style vibe clothes model",
+            "room": "fashion"
+        },
+        {
+            "id": "a4mB1gG5Mww",
+            "title": "Vogue Runway Compilation 24/7",
+            "ch": "Vogue",
+            "dur": "LIVE",
+            "tags": "fashion runway style vibe design",
+            "room": "fashion"
+        },
+        {
+            "id": "9Auq9mYxFEE",
+            "title": "Sky Sports News Live",
+            "ch": "Sky Sports",
+            "dur": "LIVE",
+            "tags": "sports espn highlights soccer basketball tennis",
+            "room": "sports"
+        },
+        {
+            "id": "XkQcK5b1q9k",
+            "title": "TalkSport Radio Live Stream",
+            "ch": "TalkSport",
+            "dur": "LIVE",
+            "tags": "sports radio football premier highlights",
+            "room": "sports"
+        }
+    ]
+}

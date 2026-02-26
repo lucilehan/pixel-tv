@@ -10,9 +10,11 @@
 
 Pixel TV sits permanently in your sidebar. Pick a **Room**, click a channel, and it keeps playing while you code.
 
-- **Rooms** — four curated environments (The Café, Rainy Library, Mission Control, Vibe Coding), each with hand-picked 24/7 live streams that match the vibe
-- **Channel Memory** — remembers what you were watching. Reopen your IDE and a "Last Watched" banner lets you resume in one click
-- **Status Bar** — shows what's on at all times. Click it to change room or stop without opening the sidebar
+- **First-Run Setup** — handpick your favorite environments on initial install. Only want tech news and lofi? You got it.
+- **Rooms** — seven curated environments (The Café, Rainy Library, Mission Control, Vibe Coding, Tech News, Fashion, Sports), each with hand-picked 24/7 live streams.
+- **Dynamic Channels** — the channel list is now fetched remotely. No more dead links; if a stream goes offline, it’s fixed universally without an extension update.
+- **Channel Memory** — remembers what you were watching. Reopen your IDE and a "Last Watched" banner lets you resume in one click.
+- **Status Bar** — shows what's on at all times in the upper-right area. Click it to change room or stop without opening the sidebar.
 
 Think of it less like a video player and more like a TV set that happens to live in your editor — you don't search for content, you just change the channel.
 
@@ -73,7 +75,10 @@ Four named environments, each with curated 24/7 live streams:
 | ☕ The Café | A corner table by the window. It's raining. | Jazz, bossa nova, coffee shop radio |
 | 🌧 Rainy Library | Dark academia. Lamp on. Pages turning. | Lofi Girl, Chillhop |
 | 🚀 Mission Control | Synthwave and neon. Somewhere in the future. | Synthwave Plaza, retrowave |
-| 🧑‍💻 Vibe Coding | Others are coding too. You're not alone. | Brain Food, study-with-me streams |
+| 🧑‍💻 Vibe Coding | Others are coding too. You're not alone. | Brain Food, study-with-me |
+| 📰 Tech News | Live tech updates and stock coverage. | Bloomberg News, Reuters, Tech Live |
+| 👗 Fashion | Runway shows and lo-fi fashion streams. | FashionTV, Vogue Runway |
+| 🏅 Sports | Live scores, highlights, and sports radio. | Sky Sports, TalkSport |
 
 ---
 
@@ -120,6 +125,12 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 ---
 
 ## Changelog
+
+### 1.1.0
+- **Dynamic Channels** — Channels are no longer hardcoded! Fixing dead links or adding new rooms now happens instantly via a remote `channels.json` update.
+- **First-Run Setup** — Handpick which rooms appear in your sidebar on first launch (or manage them anytime via settings).
+- **New Rooms** — Added 📰 Tech & Finance, 👗 Fashion, and 🏅 Sports categories.
+- **Status Bar 2.0** — Pushed the status bar indicator further right and increased priority for better visibility.
 
 ### 1.0.3
 - Registry Hotfix: Bumped version to resolve a publication conflict on Open VSX.
