@@ -193,9 +193,9 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
         const videoIdMatch = String(msg.videoId).match(/^[a-zA-Z0-9_-]{11}$/);
         const safeId = videoIdMatch ? videoIdMatch[0] : '';
         if (safeId) {
-          // Standard clean embed URL - the API handles the rest
-          const url = `https://www.youtube.com/embed/${safeId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
-          this._view?.webview.postMessage({ type: 'loadPlayer', videoId: safeId });
+          // Absolute baseline v1.0.3 style embed
+          const url = `https://www.youtube.com/embed/${safeId}?autoplay=1&rel=0&modestbranding=1`;
+          this._view?.webview.postMessage({ type: 'loadPlayer', url });
           // Persist last played
           const last: LastPlayed = { videoId: safeId, title: msg.title, room: msg.room };
           this._context.globalState.update('pixelTv.lastPlayed', last);
@@ -319,9 +319,8 @@ function getWebviewContent(
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src https://www.youtube.com https://www.youtube-nocookie.com; img-src https://i.ytimg.com https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'nonce-${nonce}' https://www.youtube.com https://s.ytimg.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src https://www.youtube.com https://www.youtube-nocookie.com; img-src https://i.ytimg.com https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'nonce-${nonce}';">
 <title>Pixel TV</title>
-<script src="https://www.youtube.com/iframe_api" nonce="${nonce}"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
 
@@ -505,7 +504,7 @@ function getWebviewContent(
         <div class="loading-bar"><div class="loading-bar-fill" id="loadingFill"></div></div>
         <div class="loading-text" id="loadingText">TUNING▮</div>
       </div>
-      <div id="player"></div>
+      <iframe id="playerFrame" src="" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
       <div class="now-playing-bar" id="nowPlayingBar">
         <div class="np-dot"></div>
         <span class="np-title" id="npTitle"></span>
@@ -542,6 +541,7 @@ function getWebviewContent(
 
 <script nonce="${nonce}">
   const vscode        = acquireVsCodeApi();
+  const playerFrame   = document.getElementById('playerFrame');
   const idleScreen    = document.getElementById('idleScreen');
   const loadingOverlay= document.getElementById('loadingOverlay');
   const loadingFill   = document.getElementById('loadingFill');
@@ -559,14 +559,6 @@ function getWebviewContent(
   const setupLayer    = document.getElementById('setupLayer');
   const tvWrap        = document.getElementById('tvWrap');
   const setupList     = document.getElementById('setupList');
-
-  let player = null;
-  let playerReady = false;
-
-  // Called by YouTube API automatically
-  window.onYouTubeIframeAPIReady = function() {
-    console.log('YouTube API Ready');
-  };
 
   const allVideos  = ${videosJson};
   const activeRooms= ${roomsJson};
@@ -728,38 +720,15 @@ function getWebviewContent(
       setTimeout(() => {
         loadingOverlay.classList.remove('visible');
         idleScreen.style.display = 'none';
-
-        if (player) {
-          player.loadVideoById(msg.videoId);
-        } else {
-          player = new YT.Player('player', {
-            height: '100%',
-            width: '100%',
-            videoId: msg.videoId,
-            playerVars: {
-              autoplay: 1,
-              rel: 0,
-              modestbranding: 1,
-              enablejsapi: 1
-            },
-            events: {
-              onReady: (e) => {
-                e.target.playVideo();
-                playerReady = true;
-              }
-            }
-          });
-        }
-        document.getElementById('player').style.display = 'block';
+        playerFrame.src = msg.url;
+        playerFrame.style.display = 'block';
         nowPlayingBar.classList.add('visible');
       }, 500);
     }
 
     if (msg.type === 'stop') {
-      if (player && typeof player.stopVideo === 'function') {
-        player.stopVideo();
-      }
-      document.getElementById('player').style.display = 'none';
+      playerFrame.src = '';
+      playerFrame.style.display = 'none';
       nowPlayingBar.classList.remove('visible');
       idleScreen.style.display = '';
       document.querySelectorAll('.result-item').forEach(el => el.classList.remove('selected'));
