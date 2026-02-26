@@ -44,8 +44,9 @@ const FALLBACK_CONFIG: ChannelConfig = {
 };
 
 async function fetchDynamicConfig(): Promise<ChannelConfig> {
+  const cacheBustUrl = `${REMOTE_CHANNELS_URL}?t=${Date.now()}`;
   return new Promise((resolve) => {
-    https.get(REMOTE_CHANNELS_URL, (res) => {
+    https.get(cacheBustUrl, (res) => {
       let data = '';
       if (res.statusCode !== 200) {
         resolve(FALLBACK_CONFIG);
@@ -192,7 +193,8 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
         const videoIdMatch = String(msg.videoId).match(/^[a-zA-Z0-9_-]{11}$/);
         const safeId = videoIdMatch ? videoIdMatch[0] : '';
         if (safeId) {
-          const url = `https://www.youtube.com/embed/${safeId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1`;
+          // Use standard youtube.com for better live compatibility
+          const url = `https://www.youtube.com/embed/${safeId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1&widget_referrer=${encodeURIComponent('https://google.com')}`;
           this._view?.webview.postMessage({ type: 'loadPlayer', url });
           // Persist last played
           const last: LastPlayed = { videoId: safeId, title: msg.title, room: msg.room };
@@ -718,7 +720,7 @@ function getWebviewContent(
       setTimeout(() => {
         loadingOverlay.classList.remove('visible');
         idleScreen.style.display = 'none';
-        // Append origin to satisfy YouTube security
+        // Append origin to satisfy YouTube security (vital for live streams)
         const finalUrl = msg.url + '&origin=' + encodeURIComponent(window.location.origin);
         playerFrame.src = finalUrl;
         playerFrame.style.display = 'block';
