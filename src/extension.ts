@@ -35,10 +35,11 @@ const FALLBACK_CONFIG: ChannelConfig = {
     { id: "Dx5qFachd3A", title: "Jazz & Bossa Nova – Coffee Shop Radio", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee relax chill music", room: "cafe" },
     { id: "jfKfPfyJRdk", title: "lofi hip hop radio – beats to relax/study to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi dark academia chill relax study beats", room: "library" },
     { id: "4m_oTMFpJOE", title: "Synthwave Radio – beats to chill/drive to", ch: "Synthwave Plaza", dur: "LIVE", tags: "gaming synthwave retrowave electronic music", room: "mission" },
-    { id: "5tUCmMM9S4E", title: "Brain Food – Deep Focus Music 24/7", ch: "Brain Food", dur: "LIVE", tags: "study vibe focus vibecoding coding work", room: "vibe" },
-    { id: "dp8PhLsUcFE", title: "Bloomberg Global Global News", ch: "Bloomberg", dur: "LIVE", tags: "news tech finance stocks bloomberg business", room: "tech" },
+    { id: "vS6wVuzEp28", title: "DW News (English) – Live", ch: "DW News", dur: "LIVE", tags: "news world tech finance europe", room: "tech" },
+    { id: "vD_B8R8-T-c", title: "Al Jazeera English | Live", ch: "Al Jazeera English", dur: "LIVE", tags: "news world tech current updates", room: "tech" },
+    { id: "21X5lGlDOfg", title: "NASA TV – Official Public Channel", ch: "NASA", dur: "LIVE", tags: "space mission science rocket exploration", room: "mission" },
     { id: "L_LUpfSNCpY", title: "FashionTV Live 24/7", ch: "FashionTV", dur: "LIVE", tags: "fashion runway style vibe clothes model", room: "fashion" },
-    { id: "9Auq9mY9CYY", title: "Sky News Live (UK)", ch: "Sky News", dur: "LIVE", tags: "news world sports headlines", room: "sports" }
+    { id: "Ap-UM1O9RBU", title: "France 24 English (Live News)", ch: "France 24", dur: "LIVE", tags: "news world sports headlines", room: "sports" }
   ]
 };
 

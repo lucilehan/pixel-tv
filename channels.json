@@ -142,11 +142,19 @@
             "room": "vibe"
         },
         {
-            "id": "dp8PhLsUcFE",
-            "title": "Bloomberg Global Global News",
-            "ch": "Bloomberg",
+            "id": "vS6wVuzEp28",
+            "title": "DW News (English) – Live",
+            "ch": "DW News",
             "dur": "LIVE",
-            "tags": "news tech finance stocks bloomberg business",
+            "tags": "news world tech finance europe",
+            "room": "tech"
+        },
+        {
+            "id": "vD_B8R8-T-c",
+            "title": "Al Jazeera English | Live",
+            "ch": "Al Jazeera English",
+            "dur": "LIVE",
+            "tags": "news world tech current updates",
             "room": "tech"
         },
         {
@@ -158,12 +166,12 @@
             "room": "tech"
         },
         {
-            "id": "vS6wVuzEp28",
-            "title": "DW News (English) – Live",
-            "ch": "DW News",
+            "id": "21X5lGlDOfg",
+            "title": "NASA TV – Official Public Channel",
+            "ch": "NASA",
             "dur": "LIVE",
-            "tags": "news world tech finance europe",
-            "room": "tech"
+            "tags": "space mission science rocket exploration",
+            "room": "mission"
         },
         {
             "id": "L_LUpfSNCpY",
@@ -174,17 +182,9 @@
             "room": "fashion"
         },
         {
-            "id": "W_v-Yv_m2X8",
-            "title": "The Fashion Channel Live",
-            "ch": "Fashion Channel",
-            "dur": "LIVE",
-            "tags": "fashion runway style vibe design",
-            "room": "fashion"
-        },
-        {
-            "id": "9Auq9mY9CYY",
-            "title": "Sky News Live (UK)",
-            "ch": "Sky News",
+            "id": "Ap-UM1O9RBU",
+            "title": "France 24 English (Live News)",
+            "ch": "France 24",
             "dur": "LIVE",
             "tags": "news world sports headlines",
             "room": "sports"
