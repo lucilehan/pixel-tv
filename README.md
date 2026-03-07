@@ -2,11 +2,8 @@
 
 > Your in-editor broadcast player — flip through curated channels while you code. Sits in your Explorer sidebar, remembers your last channel, and shows what's on in the status bar.
 
-<img src="media/01-setup.png" width="320" alt="Pixel Tube setup screen">
 
 <img src="media/02-playing.png" width="320" alt="Pixel Tube playing Nintendo Radio">
-
-<img src="media/03-search.png" width="320" alt="Pixel Tube search in action">
 
 ---
 
@@ -121,6 +118,9 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 ---
 
 ## Changelog
+
+### 1.2.1
+- **Icon tweak**: Adjusted brightness, contrast, and saturation of the new dark wood icon for better visibility
 
 ### 1.2.0
 - **New icon**: dark wood exterior matching the in-editor TV, red LED, red antenna tips
