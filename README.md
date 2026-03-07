@@ -2,7 +2,9 @@
 
 > Your in-editor broadcast player — flip through curated channels while you code. Sits in your Explorer sidebar, remembers your last channel, and shows what's on in the status bar.
 
-![Pixel Tube Demo](https://github.com/lucilehan/pixel-tube/raw/main/media/demo.gif)
+![Pixel Tube Interface](media/interface.png)
+
+![Pixel Tube Setup](media/setup.png)
 
 ---
 
@@ -115,6 +117,10 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 ---
 
 ## Changelog
+
+### 1.1.3
+- Updated README with fresh screenshots (Setup and Interface)
+- Removed outdated demo GIF
 
 ### 1.1.2
 - Enhanced searchability with new keywords (entertainment, news, stream, video)
