@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as http from 'http';
 import * as https from 'https';
 import * as net from 'net';
+import { URL } from 'url';
 
 // ── Local server ───────────────────────────────────────────────────────────────
 let server: http.Server | undefined;
@@ -43,7 +44,7 @@ async function findFreePort(): Promise<number> {
 async function startServer(): Promise<number> {
   if (server && serverPort) { return serverPort; }
   const port = await findFreePort();
-  server = http.createServer((req, res) => {
+  server = http.createServer((req: any, res: any) => {
     if (req.method !== 'GET') {
       res.writeHead(405);
       res.end();
@@ -57,8 +58,8 @@ async function startServer(): Promise<number> {
       return;
     }
 
-    const url = new URL(req.url || '/', `http://127.0.0.1:${port}`);
-    const rawVideoId = url.searchParams.get('v') || '';
+    const targetUrl = new URL(req.url || '/', `http://127.0.0.1:${port}`);
+    const rawVideoId = targetUrl.searchParams.get('v') || '';
     const videoIdMatch = rawVideoId.match(/^[a-zA-Z0-9_-]{11}$/);
     const videoId = videoIdMatch ? videoIdMatch[0] : '';
 
@@ -89,9 +90,9 @@ function stopServer() {
 // ── YouTube API search ────────────────────────────────────────────────────────
 function httpsGet(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
+    https.get(url, (res: any) => {
       let data = '';
-      res.on('data', (chunk) => data += chunk);
+      res.on('data', (chunk: any) => data += chunk);
       res.on('end', () => resolve(data));
     }).on('error', reject);
   });
@@ -131,30 +132,31 @@ interface LastPlayed {
 
 // ── Rooms (replaces genre chips) ──────────────────────────────────────────────
 const ROOMS = [
-  { id: 'cafe', label: '☕ The Café', desc: 'A corner table by the window. It\'s raining.', tags: 'jazz bossa nova coffee' },
-  { id: 'library', label: '🌧 Rainy Library', desc: 'Dark academia. Lamp on. Pages turning.', tags: 'lofi dark academia chill' },
-  { id: 'mission', label: '🚀 Mission Control', desc: 'Synthwave and neon. Somewhere in the future.', tags: 'gaming synthwave retrowave' },
-  { id: 'vibe', label: '🧑‍💻 Vibe Coding', desc: 'Others are coding too. You\'re not alone.', tags: 'study vibe focus vibecoding' },
+  { id: 'music', label: '🎧 Music', desc: 'Live lofi, cafe jazz, and chill beats.', tags: 'lofi beats jazz music chill' },
+  { id: 'news', label: '📰 News', desc: 'Live global coverage and financial updates.', tags: 'news world event finance global' },
+  { id: 'entertainment', label: '🎬 Entertainment', desc: 'Live films, compilations, and city cams.', tags: 'entertainment funny comedy clips live' },
+  { id: 'touch_grass', label: '🌿 Touch Grass', desc: 'Live a little, touch grass.', tags: 'nature grass outdoors wildlife forest' },
 ];
 
 // ── Curated 24/7 live streams ─────────────────────────────────────────────────
 const CURATED_LIVE: VideoItem[] = [
-  // ☕ The Café
-  { id: "Dx5qFachd3A", title: "Jazz & Bossa Nova – Coffee Shop Radio", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee relax chill music", room: "cafe" },
-  { id: "DWcJFNfaw9c", title: "Coffee Shop Radio – Jazz & Bossa Nova", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee cafe chill music", room: "cafe" },
-  { id: "TbFrCUMFaZ8", title: "Jazz Piano Radio – Relaxing Music 24/7", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz piano relax smooth music chill", room: "cafe" },
-  // 🌧 Rainy Library
-  { id: "jfKfPfyJRdk", title: "lofi hip hop radio – beats to relax/study to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi dark academia chill relax study beats", room: "library" },
-  { id: "5qap5aO4i9A", title: "lofi hip hop radio – beats to sleep/chill to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi dark academia chill sleep beats music", room: "library" },
-  { id: "kgx4WGK0oNU", title: "Chillhop Radio – jazzy & lofi beats", ch: "Chillhop Music", dur: "LIVE", tags: "lofi dark academia chillhop chill beats", room: "library" },
-  // 🚀 Mission Control
-  { id: "4m_oTMFpJOE", title: "Synthwave Radio – beats to chill/drive to", ch: "Synthwave Plaza", dur: "LIVE", tags: "gaming synthwave retrowave electronic music", room: "mission" },
-  { id: "MVPTGNGiI-4", title: "Chillstep Radio – 24/7 Gaming Beats", ch: "Chillstep", dur: "LIVE", tags: "gaming chillstep electronic beats music", room: "mission" },
-  { id: "n61ULEU7CO0", title: "Epic Music Radio – Gaming & Study Beats", ch: "Epic Music", dur: "LIVE", tags: "gaming synthwave epic music beats", room: "mission" },
-  // 🧑‍💻 Vibe Coding
-  { id: "5tUCmMM9S4E", title: "Brain Food – Deep Focus Music 24/7", ch: "Brain Food", dur: "LIVE", tags: "study vibe focus vibecoding coding work", room: "vibe" },
-  { id: "lTRiuFIWV54", title: "Lofi Girl – beats to study/code to", ch: "Lofi Girl", dur: "LIVE", tags: "study vibe focus vibecoding coding lofi", room: "vibe" },
-  { id: "HoWRmBzVMdM", title: "Study With Me – Pomodoro Timer Live", ch: "Study Together", dur: "LIVE", tags: "study vibe with me focus pomodoro coding", room: "vibe" },
+  // 🎧 Music
+  { id: "Dx5qFachd3A", title: "Jazz & Bossa Nova | Coffee Shop Radio", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee relax chill music", room: "music" },
+  { id: "jfKfPfyJRdk", title: "lofi hip hop radio | beats to relax/study to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi dark academia chill relax study beats", room: "music" },
+  { id: "vYcDCcpue_k", title: "Nintendo Radio | 24/7 Music Live Stream", ch: "Nintendo Radio", dur: "LIVE", tags: "nintendo gaming music video game ost 24/7", room: "music" },
+  { id: "S-TNDpQGTSQ", title: "K-POP 24/7 Live Stream", ch: "K-POP Radio", dur: "LIVE", tags: "kpop k-pop korean pop music 24/7", room: "music" },
+
+  // 📰 News
+  { id: "ZvdiJUYGBis", title: "FOX 24/7 Live Stream", ch: "LiveNOW from FOX", dur: "LIVE", tags: "news world breaking live global fox", room: "news" },
+  { id: "f39oHo6vFLg", title: "Bloomberg Live: Business, Finance & Investment News", ch: "Bloomberg Television", dur: "LIVE", tags: "news tech finance stocks bloomberg business", room: "news" },
+
+  // 🌌 Entertainment
+  { id: "G43NInZfoPE", title: "The Lord of the Rings | Compilation Live Stream", ch: "Warner Bros. Entertainment", dur: "LIVE", tags: "lord of the rings lotr fantasy film compilation", room: "entertainment" },
+  { id: "WVwP298MU7I", title: "Harry Potter ⚡️ | Complete Series Compilation Stream", ch: "Warner Bros. Entertainment", dur: "LIVE", tags: "harry potter wizards fantasy film compilation warner bros", room: "entertainment" },
+  { id: "rnXIjl_Rzy4", title: "EarthCam Live: Times Square in 4K", ch: "EarthCam", dur: "LIVE", tags: "new york city times square earthcam", room: "entertainment" },
+
+  // 🌿 Touch Grass
+  { id: "8kEzFZvtLzM", title: "Calm Woodland Stream with Beautiful Birdsong", ch: "Calm", dur: "LIVE", tags: "nature grass birdsong", room: "touch_grass" },
 ];
 
 // ── Status bar ────────────────────────────────────────────────────────────────
@@ -162,7 +164,7 @@ let statusBarItem: vscode.StatusBarItem | undefined;
 
 function createStatusBar(context: vscode.ExtensionContext) {
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-  statusBarItem.command = 'pixelTv.statusBarMenu';
+  statusBarItem.command = 'pixelTube.statusBarMenu';
   context.subscriptions.push(statusBarItem);
   updateStatusBar(null);
   statusBarItem.show();
@@ -172,18 +174,18 @@ function updateStatusBar(last: LastPlayed | null) {
   if (!statusBarItem) { return; }
   if (last) {
     statusBarItem.text = `$(broadcast) ${last.title.length > 28 ? last.title.slice(0, 28) + '…' : last.title}`;
-    statusBarItem.tooltip = `Pixel TV · ${last.room}\nClick to change channel or stop`;
+    statusBarItem.tooltip = `Pixel Tube · ${last.room}\nClick to change channel or stop`;
     statusBarItem.color = new vscode.ThemeColor('statusBarItem.warningForeground');
   } else {
-    statusBarItem.text = `$(tv) Pixel TV`;
-    statusBarItem.tooltip = 'Click to open Pixel TV';
+    statusBarItem.text = `$(tv) Pixel Tube`;
+    statusBarItem.tooltip = 'Click to open Pixel Tube';
     statusBarItem.color = undefined;
   }
 }
 
 // ── Webview View Provider ─────────────────────────────────────────────────────
 class PixelTvViewProvider implements vscode.WebviewViewProvider {
-  public static readonly viewId = 'pixelTv.view';
+  public static readonly viewId = 'pixelTube.view';
   private _view?: vscode.WebviewView;
   private _port?: number;
   private _context: vscode.ExtensionContext;
@@ -194,18 +196,28 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
 
   public stopPlayback() {
     this._view?.webview.postMessage({ type: 'stop' });
-    this._context.globalState.update('pixelTv.lastPlayed', undefined);
+    this._context.globalState.update('pixelTube.lastPlayed', undefined);
     updateStatusBar(null);
+  }
+
+  public async resetSetup() {
+    await this._context.globalState.update('pixelTube.enabledRooms', undefined);
+    await this._context.globalState.update('pixelTube.lastPlayed', undefined);
+    updateStatusBar(null);
+    if (this._view && this._port) {
+      const _hasKey = !!vscode.workspace.getConfiguration('pixelTv').get('youtubeApiKey', '');
+      this._view.webview.html = getWebviewContent(this._port, CURATED_LIVE, ROOMS, undefined, undefined, _hasKey);
+    }
   }
 
   public showChannelPicker() {
     const rooms = ROOMS.map(r => r.label);
-    vscode.window.showQuickPick(rooms, { placeHolder: 'Switch to a room…' }).then(pick => {
+    vscode.window.showQuickPick(rooms, { placeHolder: 'Switch to a room…' }).then((pick: any) => {
       if (!pick) { return; }
       const room = ROOMS.find(r => r.label === pick);
       if (room) {
         this._view?.webview.postMessage({ type: 'switchRoom', roomId: room.id });
-        vscode.commands.executeCommand('pixelTv.view.focus');
+        vscode.commands.executeCommand('pixelTube.view.focus');
       }
     });
   }
@@ -220,11 +232,24 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.options = { enableScripts: true, localResourceRoots: [] };
 
-    // Restore last played from global state
-    const lastPlayed: LastPlayed | undefined = this._context.globalState.get('pixelTv.lastPlayed');
-    webviewView.webview.html = getWebviewContent(this._port, CURATED_LIVE, ROOMS, lastPlayed);
+    // Restore last played and pinned rooms from global state
+    const lastPlayed: LastPlayed | undefined = this._context.globalState.get('pixelTube.lastPlayed');
+    const enabledRooms = this._context.globalState.get<string[]>('pixelTube.enabledRooms');
 
-    webviewView.webview.onDidReceiveMessage(async (msg) => {
+    const hasApiKey = !!vscode.workspace.getConfiguration('pixelTv').get('youtubeApiKey', '');
+    webviewView.webview.html = getWebviewContent(this._port, CURATED_LIVE, ROOMS, lastPlayed, enabledRooms, hasApiKey);
+
+    webviewView.webview.onDidReceiveMessage(async (msg: any) => {
+
+      if (msg.type === 'saveSettings') {
+        await this._context.globalState.update('pixelTube.enabledRooms', msg.enabledRooms);
+        if (msg.apiKey) {
+          await vscode.workspace.getConfiguration('pixelTv').update('youtubeApiKey', msg.apiKey, vscode.ConfigurationTarget.Global);
+        }
+        const last: LastPlayed | undefined = this._context.globalState.get('pixelTube.lastPlayed');
+        const savedKey = !!vscode.workspace.getConfiguration('pixelTv').get('youtubeApiKey', '');
+        webviewView.webview.html = getWebviewContent(this._port!, CURATED_LIVE, ROOMS, last, msg.enabledRooms, savedKey);
+      }
 
       if (msg.type === 'playVideo') {
         const videoIdMatch = String(msg.videoId).match(/^[a-zA-Z0-9_-]{11}$/);
@@ -234,13 +259,13 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
           this._view?.webview.postMessage({ type: 'loadPlayer', url });
           // Persist last played
           const last: LastPlayed = { videoId: safeId, title: msg.title, room: msg.room };
-          this._context.globalState.update('pixelTv.lastPlayed', last);
+          this._context.globalState.update('pixelTube.lastPlayed', last);
           updateStatusBar(last);
         }
       }
 
       if (msg.type === 'stopped') {
-        this._context.globalState.update('pixelTv.lastPlayed', undefined);
+        this._context.globalState.update('pixelTube.lastPlayed', undefined);
         updateStatusBar(null);
       }
 
@@ -253,7 +278,7 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
           const results = CURATED_LIVE.filter(v => (v.title + v.ch + v.tags).toLowerCase().includes(q));
           this._view?.webview.postMessage({
             type: 'searchResults',
-            results: results.length > 0 ? results : CURATED_LIVE,
+            results: results,
             noApiKey: true,
           });
           return;
@@ -267,7 +292,7 @@ class PixelTvViewProvider implements vscode.WebviewViewProvider {
       }
 
       if (msg.type === 'openApiKeySettings') {
-        vscode.commands.executeCommand('workbench.action.openSettings', 'pixelTv.youtubeApiKey');
+        vscode.commands.executeCommand('workbench.action.openSettings', 'pixelTube.youtubeApiKey');
       }
 
       // Webview reports its natural pixel height — reveal the view so VS Code
@@ -296,18 +321,26 @@ export async function activate(context: vscode.ExtensionContext) {
 
   createStatusBar(context);
 
+  // Reset setup → clears room selection and last played, shows first-run screen
+  context.subscriptions.push(
+    vscode.commands.registerCommand('pixelTube.resetSetup', () => {
+      provider.resetSetup();
+      vscode.commands.executeCommand('pixelTube.view.focus');
+    })
+  );
+
   // Status bar click → quick pick: change room or stop
   context.subscriptions.push(
-    vscode.commands.registerCommand('pixelTv.statusBarMenu', async () => {
-      const last: LastPlayed | undefined = context.globalState.get('pixelTv.lastPlayed');
+    vscode.commands.registerCommand('pixelTube.statusBarMenu', async () => {
+      const last: LastPlayed | undefined = context.globalState.get('pixelTube.lastPlayed');
       const options = last
-        ? ['🎚 Change Room', '⏹ Stop', '📺 Open Pixel TV']
-        : ['📺 Open Pixel TV'];
-      const pick = await vscode.window.showQuickPick(options, { placeHolder: 'Pixel TV' });
+        ? ['🎚 Change Room', '⏹ Stop', '📺 Open Pixel Tube']
+        : ['📺 Open Pixel Tube'];
+      const pick = await vscode.window.showQuickPick(options, { placeHolder: 'Pixel Tube' });
       if (!pick) { return; }
       if (pick === '🎚 Change Room') { provider.showChannelPicker(); }
       if (pick === '⏹ Stop') { provider.stopPlayback(); }
-      if (pick === '📺 Open Pixel TV') { vscode.commands.executeCommand('pixelTv.view.focus'); }
+      if (pick === '📺 Open Pixel Tube') { vscode.commands.executeCommand('pixelTube.view.focus'); }
     })
   );
 }
@@ -331,12 +364,16 @@ function getWebviewContent(
   port: number,
   videos: VideoItem[],
   rooms: typeof ROOMS,
-  lastPlayed?: LastPlayed
+  lastPlayed?: LastPlayed,
+  enabledRooms?: string[],
+  hasApiKey?: boolean
 ): string {
   const nonce = getNonce();
   const videosJson = JSON.stringify(videos);
   const roomsJson = JSON.stringify(rooms);
   const lastJson = JSON.stringify(lastPlayed || null);
+  const enabledJson = JSON.stringify(enabledRooms || null);
+  const searchPlaceholder = hasApiKey ? 'search streams...' : 'add API key in setup to enable search';
 
   return /* html */`<!DOCTYPE html>
 <html lang="en">
@@ -344,45 +381,56 @@ function getWebviewContent(
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src http://127.0.0.1:${port} http://localhost:${port}; img-src https://i.ytimg.com https: data:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'nonce-${nonce}';">
-<title>Pixel TV</title>
+<title>Pixel Tube</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
 
   :root {
-    --wood-1:    #b8742a;
-    --wood-2:    #c98438;
-    --wood-3:    #e09a48;
-    --wood-4:    #8a5418;
-    --wood-5:    #5a3408;
-    --wood-edge: #3e2208;
-    --bez-2:     #4a4e60;
-    --bez-4:     #1a1c28;
-    --bez-hi:    #8890a8;
-    --screen-bg: #05080a;
-    --col-red:    #b04040;
-    --col-amber:  #c49a3a;
+    --wood-1:    #291a13;
+    --wood-2:    #3b251b;
+    --wood-3:    #4d3122;
+    --wood-4:    #1f140e;
+    --wood-5:    #120b08;
+    --wood-edge: #0a0604;
+    
+    --brand-text:#e6c280;
+    --brand-bg:  #17130c;
+    --brand-bd:  #080402;
+
+    --bez-2:     #1d1f21;
+    --bez-4:     #0d0e0f;
+    --bez-hi:    #383a3d;
+    
+    --screen-bg: #030405;
+    --col-red:    #a83636;
+    --col-amber:  #dfaa46;
     --col-purple: #7a4e99;
-    --glow-amber: 0 0 8px #c49a3a66, 0 0 18px #c49a3a22;
-    --text-bright:#c8c8d8;
-    --text-dim:   #4a4a62;
-    --scanline:   rgba(0,0,0,0.2);
+    --glow-amber: 0 0 10px #dfaa4688, 0 0 20px #dfaa4633;
+    --text-bright:#e0e0e0;
+    --text-dim:   #60606b;
+    --scanline:   rgba(0,0,0,0.3);
   }
 
   * { box-sizing:border-box; margin:0; padding:0; }
   /* Let body height be natural so VS Code measures it and sizes the panel correctly */
-  html, body { width:100%; background:#100c08; overflow:hidden; font-family:monospace; }
+  html, body { width:100%; height:100%; margin:0; padding:0; background:#100c08; overflow:hidden; font-family:monospace; }
+  body { padding:0 !important; }
 
-  .tv-wrap { display:flex; flex-direction:column; width:100%; background-color:var(--wood-1); background-image:repeating-linear-gradient(90deg, transparent 0px, transparent 18px, rgba(0,0,0,0.07) 18px, rgba(0,0,0,0.07) 19px, transparent 19px, transparent 32px, rgba(255,255,255,0.04) 32px, rgba(255,255,255,0.04) 33px); border:3px solid var(--wood-edge); box-shadow:inset 3px 3px 0 var(--wood-3), inset -3px -3px 0 var(--wood-5); padding:8px; overflow:hidden; }
+  .tv-wrap { display:flex; flex-direction:column; width:100%; height:100%; background-color:var(--wood-1); background-image:repeating-linear-gradient(90deg, transparent 0px, transparent 18px, rgba(0,0,0,0.1) 18px, rgba(0,0,0,0.1) 19px, transparent 19px, transparent 32px, rgba(255,255,255,0.02) 32px, rgba(255,255,255,0.02) 33px); border:3px solid var(--wood-edge); box-shadow:inset 2px 2px 0 var(--wood-3), inset -2px -2px 0 var(--wood-5); padding:8px; overflow:hidden; }
 
   .tv-nameplate { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; padding:0 2px; flex-shrink:0; }
-  .tv-brand { font-family:'Press Start 2P',monospace; font-size:5px; letter-spacing:2px; color:var(--wood-3); background:var(--wood-5); border:2px solid var(--wood-edge); padding:3px 6px; text-shadow:0 1px 0 var(--wood-edge); }
+  .tv-brand { font-family:'Press Start 2P',monospace; font-size:5px; letter-spacing:2px; color:var(--brand-text); background:var(--brand-bg); border:2px solid var(--brand-bd); padding:3px 6px; text-shadow:0 1px 0 #000; }
   .tv-screws { display:flex; gap:4px; }
   .screw { width:7px; height:7px; background:var(--wood-4); border:1px solid var(--wood-edge); position:relative; }
   .screw::before { content:''; position:absolute; top:50%; left:1px; right:1px; height:1px; background:var(--wood-edge); transform:translateY(-50%); }
   .screw::after  { content:''; position:absolute; left:50%; top:1px; bottom:1px; width:1px; background:var(--wood-edge); transform:translateX(-50%); }
 
-  .screen-bezel { background:var(--bez-2); border:3px solid var(--bez-4); padding:7px; box-shadow:inset 3px 3px 0 var(--bez-hi), inset -3px -3px 0 var(--bez-4); margin-bottom:6px; flex-shrink:0; }
+  .screen-bezel { background:var(--bez-2); border:3px solid var(--bez-4); padding:7px; box-shadow:inset 3px 3px 0 var(--bez-hi), inset -3px -3px 0 var(--bez-4); margin-bottom:0; flex-shrink:0; }
   .screen { background:var(--screen-bg); border:2px solid var(--bez-4); position:relative; overflow:hidden; width:100%; height:148px; flex-shrink:0; }
+
+  .screen-resize-handle { height:7px; background:var(--wood-2); cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-top:1px solid var(--wood-3); border-bottom:1px solid var(--wood-4); margin-bottom:6px; }
+  .screen-resize-handle:hover, .screen-resize-handle.dragging { background:var(--wood-3); }
+  .resize-grip { width:20px; height:2px; background:repeating-linear-gradient(90deg, var(--wood-5) 0px, var(--wood-5) 2px, transparent 2px, transparent 4px); }
   .screen::after { content:''; position:absolute; inset:0; pointer-events:none; z-index:20; background:repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, var(--scanline) 2px, var(--scanline) 4px); }
   .screen::before { content:''; position:absolute; top:0; left:0; width:45%; height:35%; background:radial-gradient(ellipse at 15% 15%, rgba(255,240,180,0.04) 0%, transparent 65%); pointer-events:none; z-index:30; }
 
@@ -423,33 +471,35 @@ function getWebviewContent(
   /* API key banner */
   .api-banner { display:none; align-items:center; justify-content:space-between; padding:4px 6px; background:#0c0806; border-top:1px solid #3e2208; gap:4px; flex-shrink:0; }
   .api-banner.visible { display:flex; }
-  .api-banner-text { font-family:'Press Start 2P',monospace; font-size:6px; color:#8a5418; flex:1; }
-  .api-banner-btn { font-family:'Press Start 2P',monospace; font-size:6px; padding:3px 5px; background:#100a04; color:var(--col-amber); border:1px solid #5a3408; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+  .api-banner-text { font-family:'Press Start 2P',monospace; font-size:7px; color:#8a5418; flex:1; }
+  .api-banner-btn { font-family:'Press Start 2P',monospace; font-size:7px; padding:3px 5px; background:#100a04; color:var(--col-amber); border:1px solid #5a3408; cursor:pointer; white-space:nowrap; flex-shrink:0; }
   .api-banner-btn:hover { border-color:var(--col-amber); }
 
-  .toolbar { display:flex; align-items:center; gap:4px; padding:5px 4px; background:#080a06; border-top:1px solid var(--wood-edge); border-bottom:1px solid #0d0d08; flex-shrink:0; }
-  .yt-logo { font-size:5px; color:var(--col-red); padding:2px 5px; border:1px solid var(--col-red); opacity:0.8; flex-shrink:0; }
-  .search-box { flex:1; display:flex; align-items:center; background:#060808; border:1px solid #1a2018; height:20px; padding:0 5px; min-width:0; }
-  .search-input { background:none; border:none; outline:none; flex:1; font-family:'VT323',monospace; font-size:13px; color:#6dbf7e; caret-color:#6dbf7e; min-width:0; }
-  .search-input::placeholder { color:#2a3a28; font-size:11px; }
-  .search-btn { font-family:'Press Start 2P',monospace; font-size:4px; padding:3px 6px; background:#0c1410; color:var(--col-amber); border:1px solid var(--col-amber); box-shadow:var(--glow-amber); cursor:pointer; height:20px; opacity:0.8; flex-shrink:0; }
-  .search-btn:hover { opacity:1; }
+  /* Enhanced Search Bar */
+  .toolbar { display:flex; align-items:center; gap:4px; padding:6px 6px; background:#0a0c0a; border-top:1px solid #141814; border-bottom:1px solid #0d0d08; flex-shrink:0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); }
+  .search-box { flex:1; display:flex; align-items:center; background:#111511; border:1px solid #20261f; height:24px; padding:0 8px; min-width:0; border-radius:12px; transition:border-color 0.2s; }
+  .search-box:focus-within { border-color:var(--wood-2); }
+  .search-input { background:none; border:none; outline:none; flex:1; font-family:'VT323',monospace; font-size:17px; color:#c8e8c8; caret-color:#6dbf7e; min-width:0; }
+  .search-input::placeholder { color:#4a5a48; font-size:14px; }
 
   /* Rooms bar */
-  .rooms-bar { display:flex; flex-direction:column; padding:4px; background:#040605; border-top:1px solid #0e110e; flex-shrink:0; gap:2px; }
-  .room-chip { font-family:'Press Start 2P',monospace; font-size:6px; padding:5px 8px; border:1px solid #1a1a10; background:#080a06; color:#b06a2a; cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+  .rooms-bar { display:flex; flex-direction:column; padding:4px; background:#040605; border-top:1px solid #0e110e; flex-shrink:0; gap:3px; }
+  .room-chip { font-family:'Press Start 2P',monospace; font-size:8px; padding:6px 8px; border:1px solid #1a1a10; background:#080a06; color:#b06a2a; cursor:pointer; display:flex; align-items:center; justify-content:space-between; transition: 0.1s; }
   .room-chip:hover { border-color:#c87a35; color:#c87a35; }
   .room-chip.active { background:#10080e; border-color:var(--col-purple); color:var(--col-purple); }
-  .room-desc { font-family:'VT323',monospace; font-size:10px; color:var(--text-dim); font-weight:normal; }
+  .room-desc { font-family:'VT323',monospace; font-size:12px; color:var(--text-dim); font-weight:normal; }
   .room-chip.active .room-desc { color:#7a4e99aa; }
 
-  .results-header { display:flex; align-items:center; justify-content:space-between; padding:4px 6px; background:#060806; border-top:1px solid #0e110e; flex-shrink:0; }
-  .results-label { font-size:3px; color:var(--text-dim); letter-spacing:1px; font-family:'Press Start 2P',monospace; }
-  .results-count-wrap { display:flex; align-items:center; gap:4px; }
-  .live-badge { font-family:'Press Start 2P',monospace; font-size:3px; padding:1px 3px; background:#3a0808; border:1px solid var(--col-red); color:var(--col-red); }
-  .results-count { font-family:'VT323',monospace; font-size:11px; color:var(--col-amber); opacity:0.6; }
+  .search-header { display:flex; align-items:center; justify-content:space-between; padding:4px 6px 3px; background:#050705; border-top:1px solid #181e16; flex-shrink:0; }
+  .search-header-label { font-family:'Press Start 2P',monospace; font-size:6px; color:var(--text-dim); letter-spacing:1px; }
+  .search-header-hint { font-family:'VT323',monospace; font-size:11px; color:#3a4a38; }
 
-  .results-list { background:#030506; height:135px; overflow-y:auto; flex-shrink:0; }
+  .results-header { display:flex; align-items:center; justify-content:flex-end; padding:4px 6px; background:#060806; border-top:1px solid #0e110e; flex-shrink:0; }
+  .on-air-badge { display:inline-flex; align-items:center; gap:5px; border:1px solid #2a3828; padding:2px 6px; background:#070a06; }
+  .results-label { font-size:6px; color:var(--col-amber); letter-spacing:1px; font-family:'Press Start 2P',monospace; }
+  .results-count { font-family:'VT323',monospace; font-size:14px; color:var(--col-amber); opacity:0.8; line-height:1; }
+
+  .results-list { background:#030506; flex:1; min-height:0; overflow-y:auto; }
   .results-list::-webkit-scrollbar { width:3px; }
   .results-list::-webkit-scrollbar-track { background:#030506; }
   .results-list::-webkit-scrollbar-thumb { background:#2a2a1a; }
@@ -462,19 +512,66 @@ function getWebviewContent(
   .result-thumb img { width:100%; height:100%; object-fit:cover; filter:saturate(0.3) brightness(0.75); display:block; }
   .result-item:hover .result-thumb img, .result-item.selected .result-thumb img { filter:saturate(0.55) brightness(0.85); }
   .result-meta { flex:1; min-width:0; width:0; overflow:hidden; }
-  .result-title { font-family:'VT323',monospace; font-size:12px; color:var(--text-bright); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; opacity:0.8; }
+  .result-title { font-family:'VT323',monospace; font-size:14px; color:var(--text-bright); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; opacity:0.8; }
   .result-item.selected .result-title { color:#fff; opacity:1; }
-  .result-ch { font-size:3px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; font-family:'Press Start 2P',monospace; }
-  .result-dur { font-family:'Press Start 2P',monospace; font-size:4px; color:var(--col-red); opacity:0.8; flex-shrink:0; white-space:nowrap; }
+  .result-ch { font-size:4px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; font-family:'Press Start 2P',monospace; }
   .error-msg { font-family:'VT323',monospace; font-size:11px; color:#8a3030; padding:6px 8px; background:#0a0404; text-align:center; }
+  
+  .equalizer { display:none; gap:2px; height:8px; align-items:flex-end; margin-left:auto; }
+  .result-item.selected .equalizer { display:flex; }
+  .eq-bar { width:3px; background:var(--col-red); animation:eq 0.7s infinite alternate ease-in-out; }
+  .eq-bar:nth-child(2) { animation-delay:-0.2s; }
+  .eq-bar:nth-child(3) { animation-delay:-0.4s; }
+  @keyframes eq { 0%{height:2px} 100%{height:9px} }
+
+  .crt-flash { position:absolute; inset:0; background:#fff; z-index:40; pointer-events:none; opacity:0; }
+  @keyframes crtFlash { 0%{opacity:1;} 100%{opacity:0;} }
+  .crt-flash.flash { animation:crtFlash 0.3s ease-out; }
+
+  .setup-layer { position:absolute; inset:0; z-index:100; background:#050705; display:flex; flex-direction:column; padding:16px 14px; gap:10px; display:none; }
+  .setup-layer.visible { display:flex; }
+  .setup-title { font-family:'Press Start 2P', monospace; font-size:9px; color:var(--col-amber); text-align:center; line-height:1.6; letter-spacing:2px; text-shadow:var(--glow-amber); }
+  .setup-subtitle { font-family:'VT323', monospace; font-size:15px; color:var(--text-dim); text-align:center; letter-spacing:1px; }
+  .setup-channels { display:flex; flex-direction:column; gap:6px; margin:4px 0; overflow-y:auto; }
+  .setup-checkbox-lbl { display:flex; align-items:flex-start; gap:10px; cursor:pointer; padding:10px 8px; background:#0c100a; border:1px solid #1e2418; transition:0.15s; }
+  .setup-checkbox-lbl:hover { border-color:var(--col-amber); background:#121810; }
+  .setup-checkbox-lbl input { accent-color:var(--col-amber); transform:scale(1.3); margin-top:4px; flex-shrink:0; }
+  .setup-ch-info { display:flex; flex-direction:column; gap:2px; }
+  .setup-ch-name { font-family:'VT323', monospace; font-size:18px; color:var(--text-bright); line-height:1.1; }
+  .setup-ch-desc { font-family:'VT323', monospace; font-size:13px; color:var(--text-dim); }
+  .setup-api-section { margin-top:4px; padding:10px 8px; background:#0a0d08; border:1px solid #1a2018; }
+  .setup-api-label { font-family:'Press Start 2P', monospace; font-size:6px; color:var(--text-dim); letter-spacing:1px; margin-bottom:6px; display:block; }
+  .setup-api-row { display:flex; gap:6px; align-items:center; }
+  .setup-api-input { flex:1; background:#070a06; border:1px solid #252e22; color:#c8e8c8; font-family:'VT323',monospace; font-size:15px; padding:5px 8px; outline:none; min-width:0; }
+  .setup-api-input::placeholder { color:#3a4a38; }
+  .setup-api-input:focus { border-color:var(--col-amber); }
+  .setup-api-hint { font-family:'VT323', monospace; font-size:12px; color:var(--text-dim); margin-top:4px; }
+  .setup-api-hint a { color:#5a7a55; }
+  .setup-save-btn { font-family:'Press Start 2P',monospace; font-size:8px; padding:12px; background:#0c1008; color:var(--col-amber); border:2px solid var(--col-amber); box-shadow:var(--glow-amber); cursor:pointer; text-align:center; margin-top:auto; letter-spacing:1px; }
+  .setup-save-btn:hover { background:#181e10; }
 </style>
 </head>
 <body>
-<div class="tv-wrap">
+
+<div class="setup-layer" id="setupLayer">
+  <div class="setup-title">📺 PIXEL TUBE</div>
+  <div class="setup-subtitle">SELECT CHANNELS TO ADD TO YOUR TV</div>
+  <div class="setup-channels" id="setupRooms"></div>
+  <div class="setup-api-section">
+    <span class="setup-api-label">YOUTUBE API KEY (OPTIONAL)</span>
+    <div class="setup-api-row">
+      <input class="setup-api-input" id="setupApiInput" type="password" placeholder="paste key here..." autocomplete="off" spellcheck="false"/>
+    </div>
+    <div class="setup-api-hint">Enables full YouTube search · <a href="https://console.cloud.google.com" target="_blank">get a key →</a></div>
+  </div>
+  <button class="setup-save-btn" id="setupSaveBtn">TUNE IN ▶</button>
+</div>
+
+<div class="tv-wrap" id="tvWrap">
 
   <div class="tv-nameplate">
     <div class="tv-screws"><div class="screw"></div><div class="screw"></div></div>
-    <div class="tv-brand">PIXEL TV</div>
+    <div class="tv-brand">PIXEL TUBE</div>
     <div class="tv-screws"><div class="screw"></div><div class="screw"></div></div>
   </div>
 
@@ -497,33 +594,37 @@ function getWebviewContent(
         <div class="loading-text" id="loadingText">TUNING▮</div>
       </div>
       <iframe id="playerFrame" src="" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+      <div class="crt-flash" id="crtFlash"></div>
       <div class="now-playing-bar" id="nowPlayingBar">
         <div class="np-dot"></div>
         <span class="np-title" id="npTitle"></span>
       </div>
     </div>
   </div>
+  <div class="screen-resize-handle" id="screenResizeHandle"><span class="resize-grip"></span></div>
 
   <div class="api-banner" id="apiBanner">
     <span class="api-banner-text">Add API key for live search</span>
     <div class="api-banner-btn" id="apiKeyBtn">SET KEY ▶</div>
   </div>
 
-  <div class="toolbar">
-    <div class="yt-logo">▶YT</div>
-    <div class="search-box">
-      <input class="search-input" id="searchInput" type="text" placeholder="search live streams..." autocomplete="off" spellcheck="false"/>
-    </div>
-    <button class="search-btn" id="searchBtn">TUNE</button>
-  </div>
-
   <!-- Rooms replace genre chips -->
   <div class="rooms-bar" id="roomsBar"></div>
 
+  <div class="search-header">
+    <span class="search-header-label">SEARCH</span>
+    ${!hasApiKey ? '<span class="search-header-hint">Add API key in Setup to search YouTube</span>' : ''}
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input class="search-input" id="searchInput" type="text" placeholder="${searchPlaceholder}" autocomplete="off" spellcheck="false"/>
+    </div>
+  </div>
+
   <div class="results-header">
-    <span class="results-label">ON AIR</span>
-    <div class="results-count-wrap">
-      <span class="live-badge">● LIVE</span>
+    <div class="on-air-badge">
+      <span class="results-label">ON AIR</span>
       <span class="results-count" id="resultsCount">0</span>
     </div>
   </div>
@@ -547,27 +648,93 @@ function getWebviewContent(
   const roomsBar      = document.getElementById('roomsBar');
   const resumeBanner  = document.getElementById('resumeBanner');
   const resumeTitle   = document.getElementById('resumeTitle');
+  const screenEl      = document.querySelector('.screen');
+  const resizeHandle  = document.getElementById('screenResizeHandle');
+
+  // ── Screen resize ──────────────────────────────────────────────────────────
+  let isResizing = false, resizeStartY = 0, resizeStartH = 0;
+  resizeHandle.addEventListener('mousedown', e => {
+    isResizing = true;
+    resizeStartY = e.clientY;
+    resizeStartH = screenEl.offsetHeight;
+    resizeHandle.classList.add('dragging');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!isResizing) return;
+    const newH = Math.max(60, Math.min(480, resizeStartH + (e.clientY - resizeStartY)));
+    screenEl.style.height = newH + 'px';
+  });
+  document.addEventListener('mouseup', () => {
+    if (!isResizing) return;
+    isResizing = false;
+    resizeHandle.classList.remove('dragging');
+  });
+
 
   const allVideos  = ${videosJson};
   const allRooms   = ${roomsJson};
   const lastPlayed = ${lastJson};
+  const enabledRooms = ${enabledJson};
+
+  const isFirstRun = enabledRooms === null;
+  const activeRooms = isFirstRun ? allRooms : allRooms.filter(r => enabledRooms.includes(r.id));
 
   let activeRoomId = null;
+  let _loadingTimer = null;
+
+  function showLoading(text) {
+    clearTimeout(_loadingTimer);
+    loadingText.textContent = text;
+    loadingFill.style.animation = 'none';
+    void loadingFill.offsetWidth;
+    loadingFill.style.animation = 'loadingAnim 0.5s ease-in-out forwards';
+    loadingOverlay.classList.add('visible');
+    _loadingTimer = setTimeout(() => loadingOverlay.classList.remove('visible'), 5000);
+  }
+
+  function hideLoading() {
+    clearTimeout(_loadingTimer);
+    loadingOverlay.classList.remove('visible');
+  }
 
   // ── Helpers ──
   function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  // ── First Run Setup ──
+  if (isFirstRun) {
+    document.getElementById('tvWrap').style.display = 'none';
+    const setupLayer = document.getElementById('setupLayer');
+    setupLayer.classList.add('visible');
+    
+    const cbContainer = document.getElementById('setupRooms');
+    allRooms.forEach(r => {
+      const lbl = document.createElement('label');
+      lbl.className = 'setup-checkbox-lbl';
+      lbl.innerHTML = \`<input type="checkbox" value="\${r.id}" checked><div class="setup-ch-info"><span class="setup-ch-name">\${r.label}</span><span class="setup-ch-desc">\${r.desc}</span></div>\`;
+      cbContainer.appendChild(lbl);
+    });
+    
+    document.getElementById('setupSaveBtn').addEventListener('click', () => {
+      const checked = Array.from(cbContainer.querySelectorAll('input:checked')).map(i => i.value);
+      const apiKey = document.getElementById('setupApiInput').value.trim();
+      vscode.postMessage({ type: 'saveSettings', enabledRooms: checked, apiKey });
+    });
+  }
+
   // ── Build rooms bar ──
-  allRooms.forEach(room => {
-    const chip = document.createElement('div');
-    chip.className = 'room-chip';
-    chip.dataset.roomId = room.id;
-    chip.innerHTML = \`<span>\${room.label}</span><span class="room-desc">\${room.desc}</span>\`;
-    chip.addEventListener('click', () => selectRoom(room.id));
-    roomsBar.appendChild(chip);
-  });
+  if (!isFirstRun) {
+    activeRooms.forEach(room => {
+      const chip = document.createElement('div');
+      chip.className = 'room-chip';
+      chip.dataset.roomId = room.id;
+      chip.innerHTML = \`<span>\${room.label}</span><span class="room-desc">\${room.desc}</span>\`;
+      chip.addEventListener('click', () => selectRoom(room.id));
+      roomsBar.appendChild(chip);
+    });
+  }
 
   function selectRoom(roomId) {
     activeRoomId = roomId;
@@ -575,6 +742,12 @@ function getWebviewContent(
     const videos = allVideos.filter(v => v.room === roomId);
     renderResults(videos, false);
     searchInput.value = '';
+    
+    // Auto-play first video in room
+    if (videos.length > 0) {
+      const firstItem = resultsList.querySelector('.result-item');
+      if (firstItem) playVideo(firstItem, videos[0]);
+    }
   }
 
   // ── Render results ──
@@ -594,23 +767,27 @@ function getWebviewContent(
           <div class="result-title">\${escHtml(r.title)}</div>
           <div class="result-ch">\${escHtml(r.ch)}</div>
         </div>
-        <div class="result-dur">● LIVE</div>
+        <div class="equalizer"><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div></div>
       \`;
       item.addEventListener('click', () => playVideo(item, r));
       resultsList.appendChild(item);
     });
   }
 
-  // ── Play ──
   function playVideo(item, r) {
     document.querySelectorAll('.result-item').forEach(el => el.classList.remove('selected'));
     item.classList.add('selected');
+    
+    // Trigger CRT flash animation
+    const flash = document.getElementById('crtFlash');
+    if (flash) {
+      flash.classList.remove('flash');
+      void flash.offsetWidth;
+      flash.classList.add('flash');
+    }
+    
     resumeBanner.classList.add('hidden');
-    loadingText.textContent = 'TUNING IN▮';
-    loadingFill.style.animation = 'none';
-    void loadingFill.offsetWidth;
-    loadingFill.style.animation = 'loadingAnim 0.5s ease-in-out forwards';
-    loadingOverlay.classList.add('visible');
+    showLoading('TUNING IN▮');
     const roomLabel = allRooms.find(rm => rm.id === r.room)?.label || '';
     vscode.postMessage({ type: 'playVideo', videoId: r.id, title: r.title, room: roomLabel });
     npTitle.textContent = r.title;
@@ -639,20 +816,15 @@ function getWebviewContent(
     });
   }
 
-  // ── Search ──
   function doSearch(q) {
     q = q.trim();
     if (!q) {
-      activeRoomId ? selectRoom(activeRoomId) : renderResults(allVideos.slice(0, 3), false);
+      activeRoomId ? selectRoom(activeRoomId) : renderResults([], false);
       return;
     }
     activeRoomId = null;
     document.querySelectorAll('.room-chip').forEach(c => c.classList.remove('active'));
-    loadingText.textContent = 'SCANNING▮';
-    loadingFill.style.animation = 'none';
-    void loadingFill.offsetWidth;
-    loadingFill.style.animation = 'loadingAnim 1.2s ease-in-out forwards';
-    loadingOverlay.classList.add('visible');
+    showLoading('SCANNING▮');
     vscode.postMessage({ type: 'search', query: q });
   }
 
@@ -661,8 +833,8 @@ function getWebviewContent(
     const msg = event.data;
 
     if (msg.type === 'loadPlayer') {
+      hideLoading();
       setTimeout(() => {
-        loadingOverlay.classList.remove('visible');
         idleScreen.style.display = 'none';
         playerFrame.src = msg.url;
         playerFrame.style.display = 'block';
@@ -680,16 +852,16 @@ function getWebviewContent(
 
     if (msg.type === 'switchRoom') {
       selectRoom(msg.roomId);
-      vscode.commands.executeCommand?.('pixelTv.view.focus');
+      vscode.commands.executeCommand?.('pixelTube.view.focus');
     }
 
     if (msg.type === 'searchResults') {
-      loadingOverlay.classList.remove('visible');
+      hideLoading();
       renderResults(msg.results, !!msg.noApiKey);
     }
 
     if (msg.type === 'searchError') {
-      loadingOverlay.classList.remove('visible');
+      hideLoading();
       const errDiv = document.createElement('div');
       errDiv.className = 'error-msg';
       errDiv.textContent = '⚠ ' + msg.message;
@@ -699,12 +871,12 @@ function getWebviewContent(
   });
 
   document.getElementById('apiKeyBtn').addEventListener('click', () => vscode.postMessage({ type: 'openApiKeySettings' }));
-  document.getElementById('searchBtn').addEventListener('click', () => doSearch(searchInput.value));
   searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(searchInput.value); });
+  searchInput.addEventListener('input', () => doSearch(searchInput.value));
 
   // ── Init: show default 3 or restore last room ──
-  if (!lastPlayed) {
-    renderResults(allVideos.slice(0, 3), false);
+  if (!isFirstRun && !lastPlayed) {
+    renderResults([], false);
   }
 
   // ── Tell VS Code the natural height so the panel expands to fit ──

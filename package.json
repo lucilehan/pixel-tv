@@ -1,8 +1,8 @@
 {
-    "name": "pixel-tv",
-    "displayName": "Pixel TV",
-    "description": "Tune into live YouTube streams inside VS Code — like flipping channels on a retro TV",
-    "version": "1.0.3",
+    "name": "pixel-tube",
+    "displayName": "Pixel Tube",
+    "description": "Your in-editor broadcast player — flip through curated channels while you code.",
+    "version": "1.1.0",
     "publisher": "lucilehan",
     "repository": {
         "type": "git",
@@ -23,40 +23,50 @@
             "explorer": [
                 {
                     "type": "webview",
-                    "id": "pixelTv.view",
-                    "name": "Pixel TV",
+                    "id": "pixelTube.view",
+                    "name": "Pixel Tube",
                     "icon": "media/icon.png",
-                    "contextualTitle": "Pixel TV"
+                    "contextualTitle": "Pixel Tube"
                 }
             ]
         },
         "commands": [
             {
-                "command": "pixelTv.view.focus",
-                "title": "Pixel TV: Open",
-                "category": "Pixel TV"
+                "command": "pixelTube.view.focus",
+                "title": "Open",
+                "category": "Pixel Tube"
             },
             {
-                "command": "pixelTv.statusBarMenu",
-                "title": "Pixel TV: Now Playing / Change Room",
-                "category": "Pixel TV"
+                "command": "pixelTube.statusBarMenu",
+                "title": "Now Playing / Change Room",
+                "category": "Pixel Tube"
+            },
+            {
+                "command": "pixelTube.resetSetup",
+                "title": "Reset Setup",
+                "category": "Pixel Tube"
             }
         ],
         "keybindings": [
             {
-                "command": "pixelTv.view.focus",
+                "command": "pixelTube.view.focus",
                 "key": "ctrl+shift+y",
-                "mac": "cmd+shift+y",
+                "mac": "cmd+shift+y"
+            },
+            {
+                "command": "pixelTube.resetSetup",
+                "key": "ctrl+shift+alt+y",
+                "mac": "cmd+shift+alt+y",
                 "when": "!terminalFocus"
             }
         ],
         "configuration": {
-            "title": "Pixel TV",
+            "title": "Pixel Tube",
             "properties": {
-                "pixelTv.youtubeApiKey": {
+                "pixelTube.youtubeApiKey": {
                     "type": "string",
                     "default": "",
-                    "markdownDescription": "YouTube Data API v3 key for live stream search beyond the curated list. Get one free at [console.cloud.google.com](https://console.cloud.google.com). Your key is stored locally in VS Code settings and never committed to any repository.",
+                    "markdownDescription": "YouTube Data API v3 key for searching beyond the curated channel list. Get one at [console.cloud.google.com](https://console.cloud.google.com). Your key is stored locally and never committed to any repository.",
                     "scope": "application"
                 }
             }
@@ -75,14 +85,14 @@
     "keywords": [
         "lofi",
         "music",
-        "live",
+        "broadcast",
         "youtube",
-        "ambient",
+        "channels",
         "focus",
         "study",
-        "tv",
         "retro",
-        "pixel"
+        "pixel",
+        "sidebar"
     ],
     "license": "MIT"
 }
