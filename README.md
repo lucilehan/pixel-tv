@@ -116,6 +116,9 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## Changelog
 
+### 1.1.2
+- Enhanced searchability with new keywords (entertainment, news, stream, video)
+
 ### 1.1.1
 - Fixed extension metadata and repository URLs for VS Code Marketplace stability
 - Synchronized package-lock configurations

@@ -2,7 +2,7 @@
     "name": "pixel-tube",
     "displayName": "Pixel Tube",
     "description": "Your in-editor broadcast player — flip through curated channels while you code.",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "publisher": "lucilehan",
     "repository": {
         "type": "git",
@@ -92,7 +92,11 @@
         "study",
         "retro",
         "pixel",
-        "sidebar"
+        "sidebar",
+        "entertainment",
+        "news",
+        "stream",
+        "video"
     ],
     "license": "MIT"
 }
