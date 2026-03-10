@@ -24,7 +24,8 @@ Pixel Tube lives permanently in your Explorer sidebar. Pick a **Channel**, click
 ### Antigravity IDE
 
 ```bash
-antigravity --install-extension https://github.com/lucilehan/pixel-tube/releases/latest/download/pixel-tube.vsix
+antigravity --install-extension pixel-tube
+
 ```
 
 Or install a `.vsix` manually:
@@ -72,7 +73,7 @@ Four environments, each with curated 24/7 broadcasts:
 
 | Channel | What's on |
 |---------|-----------|
-| 🎧 Music | Lofi, jazz, Nintendo Radio, K-POP — perfect focus beats |
+| 🎧 Music | Lofi, jazz, Retro Gaming Radio, K-POP — perfect focus beats |
 | 📰 News | Global coverage and financial updates |
 | 🎬 Entertainment | Films, compilations, city cams and more |
 | 🌿 Touch Grass | Nature, wildlife, and the outdoors |
@@ -83,7 +84,7 @@ Four environments, each with curated 24/7 broadcasts:
 
 The search bar filters built-in channels by default. To search all of YouTube, add a YouTube Data API v3 key:
 
-1. Go to [console.cloud.google.com](https://console.cloud.google.com) and create an API key with **YouTube Data API v3** enabled
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/) and create an API key with **YouTube Data API v3** enabled
 2. Open your IDE settings and search `pixelTube`
 3. Paste your key into **Pixel Tube: Youtube Api Key**
 
@@ -120,8 +121,11 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## Changelog
 
+### 1.2.4
+- **Security & Compliance**: Standardized asset metadata and genericized trademarked names to pass VS Code Marketplace security scans.
+
 ### 1.2.3
-- **Marketplace Compliance**: Standardized branding assets to meet VS Code Marketplace requirements (128x128 square icon).
+- **Marketplace Asset Update**: Optimized icon size (128x128) for marketplace recommendations.
 
 ### 1.2.2
 - **New Branding**: Replaced the extension icon and logo with a custom-designed retro pixel-art television, featuring dark wood grain, V-antennas, and an on-screen menu interface.
@@ -135,7 +139,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 - **Fix**: content no longer bleeds below the screen when the panel is minimized
 
 ### 1.1.3
-- **Featured Landing**: Nintendo Radio now appears as a "Featured" banner on first launch
+- **Featured Landing**: Retro Gaming Radio now appears as a "Featured" banner on first launch
 - **Smooth Browsing**: Toggling channels no longer interrupts your current playback
 - **Sticky Equalizer**: Audio animation now stays on the currently playing video during searches and room switching
 - **New Shortcut**: Call Pixel Tube with `Cmd+Shift+Y, T` (chord) to avoid debug conflicts
@@ -150,7 +154,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ### 1.1.0
 - Renamed to **Pixel Tube** (removed Dev suffix)
-- New channels: Entertainment (Lord of the Rings, Harry Potter, EarthCam), updated Music (Nintendo Radio, K-POP), updated News (LiveNOW FOX, Bloomberg)
+- New channels: Entertainment (Cinema Classics, Fantasy Streams, EarthCam), updated Music (Retro Gaming Radio, K-POP), updated News (Global News Network, Financial Wire)
 - API key input added to first-run setup screen
 - Setup page redesigned for legibility — channel names, descriptions, amber accents
 - TV exterior now fills full sidebar width
