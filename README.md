@@ -121,6 +121,9 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## Changelog
 
+### 1.2.8
+- **Channel Update**: Replaced private K-POP stream with THE K-POP 24/7 Live Stream
+
 ### 1.2.7
 - **Volume control**: Scroll up/down over the video to adjust volume — a retro `VOL ▓▓▓░░` indicator appears briefly on screen
 - **Mute button**: Speaker icon appears on hover in the bottom-right corner of the screen; click to toggle mute/unmute

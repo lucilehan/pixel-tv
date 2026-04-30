@@ -157,7 +157,7 @@ const CURATED_LIVE: VideoItem[] = [
   { id: "ZyAavTqsU6k", title: "Video Game Music Radio", ch: "Video Game Music Radio", dur: "LIVE", tags: "video game music gaming ost 24/7 chill", room: "music" },
   { id: "Dx5qFachd3A", title: "Jazz & Bossa Nova | Coffee Shop Radio", ch: "Cafe Music BGM", dur: "LIVE", tags: "jazz bossa nova coffee relax chill music", room: "music" },
   { id: "jfKfPfyJRdk", title: "lofi hip hop radio | beats to relax/study to", ch: "Lofi Girl", dur: "LIVE", tags: "lofi dark academia chill relax study beats", room: "music" },
-  { id: "S-TNDpQGTSQ", title: "K-POP 24/7 Live Stream", ch: "K-POP Radio", dur: "LIVE", tags: "kpop k-pop korean pop music 24/7", room: "music" },
+  { id: "JVocS7Yftw8", title: "THE K-POP 24/7 Live Stream", ch: "THE K-POP", dur: "LIVE", tags: "kpop k-pop korean pop music 24/7", room: "music" },
 
   // 📰 News
   { id: "iipR5yUp36o", title: "LIVE: ABC News Live - 24/7 news, context and analysis", ch: "ABC News", dur: "LIVE", tags: "news world breaking live global abc", room: "news" },

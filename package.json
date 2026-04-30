@@ -2,7 +2,7 @@
     "name": "pixel-tube",
     "displayName": "Pixel Tube",
     "description": "Your in-editor video player — flip through curated channels while you code.",
-    "version": "1.2.7",
+    "version": "1.2.8",
     "publisher": "lucilehan",
     "repository": {
         "type": "git",
