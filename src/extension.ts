@@ -16,16 +16,29 @@ function getPlayerHtml(videoId: string): string {
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:100%; height:100%; background:#000; overflow:hidden; }
-  iframe { width:100%; height:100%; border:none; display:block; }
+  #player { width:100%; height:100%; }
 </style>
 </head>
 <body>
-<iframe
-  src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1"
-  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-  allowfullscreen
-  style="width:100%;height:100%;border:none;display:block;">
-</iframe>
+<div id="player"></div>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+  var ytPlayer;
+  function onYouTubeIframeAPIReady() {
+    ytPlayer = new YT.Player('player', {
+      videoId: '${videoId}',
+      playerVars: { autoplay: 1, rel: 0, modestbranding: 1 }
+    });
+  }
+  window.addEventListener('message', function(e) {
+    if (!ytPlayer || typeof ytPlayer.setVolume !== 'function') return;
+    var d = e.data;
+    if (!d) return;
+    if (d.type === 'setVolume') ytPlayer.setVolume(d.volume);
+    else if (d.type === 'mute') ytPlayer.mute();
+    else if (d.type === 'unmute') ytPlayer.unMute();
+  });
+</script>
 </body>
 </html>`;
 }
@@ -72,7 +85,7 @@ async function startServer(): Promise<number> {
     res.writeHead(200, {
       'Content-Type': 'text/html',
       'Access-Control-Allow-Origin': `http://127.0.0.1:${port}`,
-      'Content-Security-Policy': "frame-src https://www.youtube-nocookie.com; default-src 'none'; style-src 'unsafe-inline';"
+      'Content-Security-Policy': "script-src https://www.youtube.com 'unsafe-inline'; frame-src https://www.youtube-nocookie.com; default-src 'none'; style-src 'unsafe-inline';"
     });
     res.end(getPlayerHtml(videoId));
   });
@@ -465,6 +478,13 @@ function getWebviewContent(
   .gray-bezel { background:var(--bez-2); border:3px solid var(--bez-4); padding:8px; box-shadow:inset 2px 2px 0 var(--bez-hi), inset -2px -2px 0 var(--bez-4), 0.5px 0.5px 0 rgba(255,255,255,0.05); margin-bottom:8px; flex-shrink:0; }
   .screen { background:var(--screen-bg); border:2px solid var(--bez-4); position:relative; overflow:hidden; width:100%; height:148px; flex-shrink:0; box-shadow: inset 0 4px 12px rgba(0,0,0,0.5); }
 
+  .screen-controls { position:absolute; bottom:6px; right:6px; z-index:25; display:flex; align-items:center; gap:4px; opacity:0; transition:opacity 0.2s; pointer-events:none; }
+  .screen:hover .screen-controls { opacity:1; pointer-events:auto; }
+  .mute-btn { background:rgba(10,12,14,0.85); border:1px solid var(--bez-4); color:var(--col-amber); font-size:10px; cursor:pointer; width:20px; height:20px; display:flex; align-items:center; justify-content:center; transition: var(--trans-mech); padding:0; }
+  .mute-btn:hover { border-color:var(--col-amber); background:rgba(20,18,10,0.9); }
+  .vol-toast { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(5,8,10,0.88); border:1px solid var(--bez-4); padding:4px 10px; font-family:'VT323',monospace; font-size:15px; color:var(--col-amber); letter-spacing:2px; z-index:30; pointer-events:none; opacity:0; transition:opacity 0.3s; white-space:nowrap; }
+  .vol-toast.visible { opacity:1; }
+
   .screen-resize-handle { height:8px; background:var(--wood-2); cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-top:1px solid var(--wood-edge); border-bottom:1px solid var(--wood-edge); margin-bottom:0; }
   .screen-resize-handle:hover, .screen-resize-handle.dragging { background:var(--wood-3); }
   .resize-grip { width:20px; height:2px; background:repeating-linear-gradient(90deg, #666 0px, #666 2px, transparent 2px, transparent 4px); }
@@ -641,6 +661,10 @@ function getWebviewContent(
           </div>
           <iframe id="playerFrame" src="" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
           <div class="crt-flash" id="crtFlash"></div>
+          <div class="screen-controls">
+            <button class="mute-btn" id="muteBtn" title="Mute / Unmute">🔊</button>
+          </div>
+          <div class="vol-toast" id="volToast"></div>
           <div class="now-playing-bar" id="nowPlayingBar">
             <div class="np-dot"></div>
             <span class="np-title" id="npTitle"></span>
@@ -754,6 +778,54 @@ function getWebviewContent(
     if (!isResizing) return;
     isResizing = false;
     resizeHandle.classList.remove('dragging');
+  });
+
+  // ── Volume / Mute ──────────────────────────────────────────────────────────
+  let isMuted = false;
+  let volume = 100;
+  let _volToastTimer = null;
+  const muteBtn  = document.getElementById('muteBtn');
+  const volToast = document.getElementById('volToast');
+
+  function postToPlayer(msg) {
+    try { playerFrame.contentWindow?.postMessage(msg, '*'); } catch(e) {}
+  }
+
+  function showVolToast(label) {
+    clearTimeout(_volToastTimer);
+    volToast.textContent = label;
+    volToast.classList.add('visible');
+    _volToastTimer = setTimeout(() => volToast.classList.remove('visible'), 1200);
+  }
+
+  function setVolume(v) {
+    volume = Math.max(0, Math.min(100, v));
+    postToPlayer({ type: 'setVolume', volume });
+    const bars = Math.round(volume / 20);
+    showVolToast('VOL ' + '▓'.repeat(bars) + '░'.repeat(5 - bars));
+    if (volume === 0 && !isMuted) { isMuted = true; muteBtn.textContent = '🔇'; }
+    else if (volume > 0 && isMuted) { isMuted = false; muteBtn.textContent = '🔊'; }
+  }
+
+  screenEl.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (!playerFrame.src) return;
+    if (isMuted) { isMuted = false; postToPlayer({ type: 'unmute' }); muteBtn.textContent = '🔊'; }
+    setVolume(volume + (e.deltaY < 0 ? 10 : -10));
+  }, { passive: false });
+
+  muteBtn.addEventListener('click', () => {
+    isMuted = !isMuted;
+    if (isMuted) {
+      postToPlayer({ type: 'mute' });
+      muteBtn.textContent = '🔇';
+      showVolToast('MUTED');
+    } else {
+      postToPlayer({ type: 'unmute' });
+      muteBtn.textContent = '🔊';
+      const bars = Math.round(volume / 20);
+      showVolToast('VOL ' + '▓'.repeat(bars) + '░'.repeat(5 - bars));
+    }
   });
 
 
@@ -925,7 +997,7 @@ if (!isFirstRun) {
   }
 
   // ── Landing / Resume banner ──
-  const landingVideoId = 'vYcDCcpue_k';
+  const landingVideoId = 'ZyAavTqsU6k';
   let targetVideoId = lastPlayed ? lastPlayed.videoId : (!isFirstRun ? landingVideoId : null);
   
   if (targetVideoId && !isFirstRun) {

@@ -121,6 +121,10 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## Changelog
 
+### 1.2.7
+- **Volume control**: Scroll up/down over the video to adjust volume — a retro `VOL ▓▓▓░░` indicator appears briefly on screen
+- **Mute button**: Speaker icon appears on hover in the bottom-right corner of the screen; click to toggle mute/unmute
+
 ### 1.2.6
 - **Channel Update**: Replaced unavailable Nintendo Radio stream with Video Game Music Radio in the Music channel
 - **UI Polish**: Removed horizontal scrollbar that appeared on hover in the curated channel list and song list panels
