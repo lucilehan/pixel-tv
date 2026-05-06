@@ -121,6 +121,11 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## Changelog
 
+### 1.2.9
+- **Fix**: Restored live stream playback broken by IFrame Player API change in 1.2.7; reverted to direct embed with `enablejsapi=1` relay for volume control
+- **Live badge**: Pulsing red dot on the thumbnail of all curated live streams
+- **Mini mode**: `▲ MINI` toggle on the resize handle collapses the panel to screen-only; `▼ FULL` restores it
+
 ### 1.2.8
 - **Channel Update**: Replaced private K-POP stream with THE K-POP 24/7 Live Stream
 

@@ -16,27 +16,25 @@ function getPlayerHtml(videoId: string): string {
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:100%; height:100%; background:#000; overflow:hidden; }
-  #player { width:100%; height:100%; }
+  iframe { width:100%; height:100%; border:none; display:block; }
 </style>
 </head>
 <body>
-<div id="player"></div>
-<script src="https://www.youtube.com/iframe_api"></script>
+<iframe id="yt"
+  src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1"
+  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+  allowfullscreen>
+</iframe>
 <script>
-  var ytPlayer;
-  function onYouTubeIframeAPIReady() {
-    ytPlayer = new YT.Player('player', {
-      videoId: '${videoId}',
-      playerVars: { autoplay: 1, rel: 0, modestbranding: 1 }
-    });
-  }
+  var yt = document.getElementById('yt');
   window.addEventListener('message', function(e) {
-    if (!ytPlayer || typeof ytPlayer.setVolume !== 'function') return;
     var d = e.data;
-    if (!d) return;
-    if (d.type === 'setVolume') ytPlayer.setVolume(d.volume);
-    else if (d.type === 'mute') ytPlayer.mute();
-    else if (d.type === 'unmute') ytPlayer.unMute();
+    if (!d || !yt) return;
+    var cmd;
+    if (d.type === 'setVolume') cmd = JSON.stringify({event:'command',func:'setVolume',args:[d.volume]});
+    else if (d.type === 'mute') cmd = JSON.stringify({event:'command',func:'mute',args:[]});
+    else if (d.type === 'unmute') cmd = JSON.stringify({event:'command',func:'unMute',args:[]});
+    if (cmd) yt.contentWindow.postMessage(cmd, '*');
   });
 </script>
 </body>
@@ -85,7 +83,7 @@ async function startServer(): Promise<number> {
     res.writeHead(200, {
       'Content-Type': 'text/html',
       'Access-Control-Allow-Origin': `http://127.0.0.1:${port}`,
-      'Content-Security-Policy': "script-src https://www.youtube.com 'unsafe-inline'; frame-src https://www.youtube-nocookie.com; default-src 'none'; style-src 'unsafe-inline';"
+      'Content-Security-Policy': "script-src 'unsafe-inline'; frame-src https://www.youtube-nocookie.com; default-src 'none'; style-src 'unsafe-inline';"
     });
     res.end(getPlayerHtml(videoId));
   });
@@ -485,9 +483,12 @@ function getWebviewContent(
   .vol-toast { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(5,8,10,0.88); border:1px solid var(--bez-4); padding:4px 10px; font-family:'VT323',monospace; font-size:15px; color:var(--col-amber); letter-spacing:2px; z-index:30; pointer-events:none; opacity:0; transition:opacity 0.3s; white-space:nowrap; }
   .vol-toast.visible { opacity:1; }
 
-  .screen-resize-handle { height:8px; background:var(--wood-2); cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-top:1px solid var(--wood-edge); border-bottom:1px solid var(--wood-edge); margin-bottom:0; }
+  .screen-resize-handle { height:8px; background:var(--wood-2); cursor:ns-resize; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-top:1px solid var(--wood-edge); border-bottom:1px solid var(--wood-edge); margin-bottom:0; position:relative; }
   .screen-resize-handle:hover, .screen-resize-handle.dragging { background:var(--wood-3); }
   .resize-grip { width:20px; height:2px; background:repeating-linear-gradient(90deg, #666 0px, #666 2px, transparent 2px, transparent 4px); }
+  .mini-toggle { position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; color:#555; font-family:'VT323',monospace; font-size:9px; cursor:pointer; padding:0 2px; line-height:1; letter-spacing:0.5px; transition:color 0.15s; }
+  .mini-toggle:hover { color:var(--col-amber); }
+  .mini-mode #roomsSection, .mini-mode #noChannelSection, .mini-mode #searchSection, .mini-mode #resultsSection, .mini-mode .tv-ridge { display:none !important; }
 
   .tv-ridge { height:8px; background:var(--bez-4); border-top:1px solid #1a1c1e; border-bottom:1px solid #000; flex-shrink:0; position:relative; overflow:hidden; box-shadow: inset 0 1px 1px rgba(0,0,0,0.5); }
   .tv-ridge::after { content:''; position:absolute; inset:0; background:repeating-linear-gradient(90deg, transparent 0, transparent 6px, rgba(0,0,0,0.2) 6px, rgba(0,0,0,0.2) 7px); opacity:0.6; }
@@ -569,7 +570,9 @@ function getWebviewContent(
   .result-item:hover { background:var(--wood-4); border-left-color: rgba(139,92,246,0.3); transform: translateX(2px); }
   .result-item.selected { background:var(--wood-5); border-color:var(--wood-edge); border-left:4px solid var(--col-purple); padding-left:8px; box-shadow: inset 1px 0 0 rgba(255,255,255,0.1), inset 8px 0 16px -8px rgba(139,92,246,0.2); position:relative; }
   .result-item.selected::before { content:''; position:absolute; left:-4px; top:0; bottom:0; width:1px; background:rgba(255,255,255,0.3); z-index:2; }
-  .result-thumb { width:40px; height:24px; flex-shrink:0; overflow:hidden; border:1px solid #1a1a12; background:#080808; }
+  .result-thumb { width:40px; height:24px; flex-shrink:0; overflow:hidden; border:1px solid #1a1a12; background:#080808; position:relative; }
+  .live-badge { position:absolute; top:2px; left:2px; width:5px; height:5px; background:#d92b2b; border-radius:50%; animation:livePulse 1.8s ease-in-out infinite; box-shadow:0 0 4px rgba(220,40,40,0.7); z-index:2; }
+  @keyframes livePulse { 0%,100%{opacity:1;box-shadow:0 0 4px rgba(220,40,40,0.7)} 50%{opacity:0.35;box-shadow:0 0 2px rgba(220,40,40,0.2)} }
   .result-thumb img { width:100%; height:100%; object-fit:cover; filter:saturate(0.3) brightness(0.75); display:block; }
   .result-item:hover .result-thumb img, .result-item.selected .result-thumb img { filter:saturate(0.55) brightness(0.85); }
   .result-meta { flex:1; min-width:0; width:0; overflow:hidden; display:flex; flex-direction:column; justify-content:center; }
@@ -671,7 +674,7 @@ function getWebviewContent(
           </div>
         </div>
       </div>
-      <div class="screen-resize-handle" id="screenResizeHandle"><span class="resize-grip"></span></div>
+      <div class="screen-resize-handle" id="screenResizeHandle"><span class="resize-grip"></span><button class="mini-toggle" id="miniToggle">▲ MINI</button></div>
     </div>
 
     <div class="tv-ridge"></div>
@@ -778,6 +781,17 @@ function getWebviewContent(
     if (!isResizing) return;
     isResizing = false;
     resizeHandle.classList.remove('dragging');
+  });
+
+  // ── Mini mode ──────────────────────────────────────────────────────────────
+  let isMiniMode = false;
+  const miniToggle = document.getElementById('miniToggle');
+  miniToggle.addEventListener('click', e => {
+    e.stopPropagation();
+    isMiniMode = !isMiniMode;
+    tvMainView.classList.toggle('mini-mode', isMiniMode);
+    miniToggle.textContent = isMiniMode ? '▼ FULL' : '▲ MINI';
+    reportHeight();
   });
 
   // ── Volume / Mute ──────────────────────────────────────────────────────────
@@ -963,6 +977,7 @@ if (!isFirstRun) {
       if (r.id === currentPlayingId) item.classList.add('selected');
       item.innerHTML = \`
         <div class="result-thumb">
+          \${r.dur === 'LIVE' ? '<div class="live-badge"></div>' : ''}
           <img src="https://i.ytimg.com/vi/\${escHtml(r.id)}/mqdefault.jpg" onerror="this.style.display='none'"/>
         </div>
         <div class="result-meta">
